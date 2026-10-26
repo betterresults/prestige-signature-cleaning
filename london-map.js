@@ -6,7 +6,7 @@
   function init() {
     var map = L.map(el, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.1 });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
-    var i = 0;
+    var i = 0, active = null;
     var layer = L.geoJSON(window.LONDON_BOROUGHS, {
       style: function () { return { className: 'borough', weight: 1.2, color: '#B08D57', fillColor: '#0D392D', fillOpacity: 0 }; },
       onEachFeature: function (f, lyr) {
@@ -14,6 +14,7 @@
         lyr.bindTooltip(f.properties.n, { sticky: true, direction: 'top', className: 'borough-tip', offset: [0, -8] });
         lyr.on('add', function () { if (lyr._path) lyr._path.style.setProperty('--i', idx); });
         lyr.on('mouseover', function () { lyr.bringToFront(); });
+        lyr.on('click', function (e) { if (active && active !== lyr && active._path) active._path.classList.remove('active'); active = lyr; lyr.bringToFront(); if (lyr._path) lyr._path.classList.add('active'); lyr.openTooltip(e.latlng); });
       }
     }).addTo(map);
     map.fitBounds(layer.getBounds(), { padding: [10, 10] });

@@ -135,7 +135,8 @@ export default async (req) => {
       const b64 = String(body.data || "").replace(/^data:[^,]+,/, "");
       if (b64.length > 8_000_000) throw new Error("Image is too large");
       const file = `${base}-${Date.now().toString(36)}.${ext}`;
-      await s.set(`img/${file}`, Buffer.from(b64, "base64"), { metadata: { type: ext === "svg" ? "image/svg+xml" : `image/${ext === "jpg" ? "jpeg" : ext}` } });
+      const buf = Buffer.from(b64, "base64");
+      await s.set(`img/${file}`, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), { metadata: { type: ext === "svg" ? "image/svg+xml" : `image/${ext === "jpg" ? "jpeg" : ext}` } });
       return json(200, { file });
     }
     if (action === "publish") {

@@ -37,6 +37,9 @@ textarea.inp{resize:vertical;min-height:70px}
 .btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
 .btn.icon{padding:6px 8px}
 .btn.full{width:100%}
+.links{display:flex;flex-direction:column;gap:6px;align-items:center;margin:10px 0 0!important}
+.links a{color:var(--g7);font-size:13px}
+.ok{color:var(--g7)!important}
 .err{color:var(--red);min-height:18px;font-size:13px;margin:8px 0 0}
 /* app */
 #app{height:100%;display:grid;grid-template-rows:56px 1fr}
@@ -143,11 +146,14 @@ kbd{background:#f1eee6;border:1px solid #ddd6c6;border-bottom-width:2px;border-r
 <div id="login">
   <form class="login-card" id="loginForm">
     <img src="/images/logo.webp" alt="Prestige Signature Cleaning">
-    <h1>Website editor</h1>
-    <p>Sign in to edit your website</p>
-    <label class="field"><span>Password</span><input class="inp" id="pw" type="password" autocomplete="current-password" required></label>
+    <h1 id="loginTitle">Website editor</h1>
+    <p id="loginSub">Sign in with your email and password</p>
+    <label class="field" id="emailField"><span>Email</span><input class="inp" id="em" type="email" autocomplete="username"></label>
+    <label class="field" id="pwField"><span>Password</span><input class="inp" id="pw" type="password" autocomplete="current-password"></label>
+    <label class="field hidden" id="pw2Field"><span>Type the password again</span><input class="inp" id="pw2" type="password" autocomplete="new-password"></label>
     <button class="btn primary full" id="loginBtn">Sign in</button>
     <p class="err" id="loginErr"></p>
+    <p class="links"><a href="#" id="forgotLink">Forgot your password?</a> <a href="#" id="legacyLink" class="hidden">Use the old shared password</a> <a href="#" id="backLink" class="hidden">Back to sign in</a></p>
   </form>
 </div>
 

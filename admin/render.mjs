@@ -40,7 +40,7 @@ export function catServices(state, catId) {
 }
 const catOrder = (state, id) => state.services.categories.findIndex((c) => c.id === id);
 
-function head(state, meta) {
+function head(state, meta, file) {
   return `<!doctype html>
 <html lang="en-GB">
 <head>
@@ -53,7 +53,7 @@ function head(state, meta) {
 ${meta.extra || ""}<style>${state.cssMin}${themeCss(state.site.theme)}</style>
 <link rel="icon" href="images/favicon.png">
 <link rel="apple-touch-icon" href="images/favicon.png">
-</head>
+${file === "index.html" ? '<script>if(/(invite|recovery|confirmation)_token=/.test(location.hash))location.replace("/admin/"+location.hash)</script>\n' : ""}</head>
 <body>
 `;
 }
@@ -202,7 +202,7 @@ export function renderPage(state, file, opts = {}) {
   const tpl = state.html[file];
   if (!meta || tpl == null) return null;
   const top = meta.header === "lp" ? lpHeader() : header(state);
-  return head(state, meta) + top + expandBlocks(state, tpl, file, opts.wrap) + footer(state);
+  return head(state, meta, file) + top + expandBlocks(state, tpl, file, opts.wrap) + footer(state);
 }
 
 export function sitemap(state, base) {

@@ -6,7 +6,9 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const LS = "psc_editor_backup";
 
-let token = sessionStorage.getItem("psc_admin") || "";
+// sign in: Netlify Identity (personal logins). The old shared password still works until everyone has a login.
+const ID = "/.netlify/identity";
+let auth = JSON.parse(localStorage.getItem("psc_auth") || "null"); // { access, refresh, exp, email } or { legacy }
 let live = null;        // published content
 let draft = null;       // working copy { site, services, pages, html, images }
 let cssMin = "";
@@ -23,14 +25,35 @@ let pickCb = null;      // image upload callback
 /* ---------------- basics ---------------- */
 function toast(msg, bad) { const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (bad ? " bad" : ""); clearTimeout(t._h); t._h = setTimeout(() => (t.className = "toast"), 3600); }
 function loading(on) { $("#loadBar").classList.toggle("hidden", !on); }
+async function idFetch(path, opts = {}) {
+  const r = await fetch(ID + path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error_description || j.msg || j.error || "Sign in failed");
+  return j;
+}
+function saveAuth(j, email) {
+  auth = { access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 60000, email: email || auth?.email };
+  localStorage.setItem("psc_auth", JSON.stringify(auth));
+}
+async function authHeader() {
+  if (!auth) return {};
+  if (auth.legacy) return { "x-admin-token": auth.legacy };
+  if (Date.now() > auth.exp) {
+    const j = await idFetch("/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: auth.refresh }) });
+    saveAuth(j);
+  }
+  return { authorization: "Bearer " + auth.access };
+}
 async function api(action, data = {}) {
-  const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json", "x-admin-token": token }, body: JSON.stringify({ action, ...data }) });
+  let headers = { "content-type": "application/json" };
+  try { Object.assign(headers, await authHeader()); } catch { logout(); throw new Error("Please sign in again"); }
+  const r = await fetch(API, { method: "POST", headers, body: JSON.stringify({ action, ...data }) });
   const j = await r.json().catch(() => ({ error: "Server error" }));
   if (r.status === 401 && action !== "login") { logout(); throw new Error("Please sign in again"); }
   if (!r.ok) throw new Error(j.error || "Something went wrong");
   return j;
 }
-function logout() { sessionStorage.removeItem("psc_admin"); token = ""; location.reload(); }
+function logout() { localStorage.removeItem("psc_auth"); auth = null; location.hash = ""; location.reload(); }
 function modal(title, bodyHtml, buttons) {
   return new Promise((resolve) => {
     const bg = document.createElement("div");
@@ -53,14 +76,63 @@ function modal(title, bodyHtml, buttons) {
 const confirmBox = (title, text, ok = "OK", cls = "primary") => modal(title, `<p>${text}</p>`, [{ label: "Cancel", value: false }, { label: ok, cls }]);
 
 /* ---------------- login + load ---------------- */
+let loginMode = "signin"; // signin | forgot | setpw | legacy
+let pendingToken = null;
+function setLoginMode(m, title, sub) {
+  loginMode = m;
+  $("#loginTitle").textContent = title || "Website editor";
+  $("#loginSub").textContent = sub || "Sign in with your email and password";
+  $("#emailField").classList.toggle("hidden", m === "setpw" || m === "legacy");
+  $("#pwField").classList.toggle("hidden", m === "forgot");
+  $("#pw2Field").classList.toggle("hidden", m !== "setpw");
+  $("#forgotLink").classList.toggle("hidden", m !== "signin");
+  $("#legacyLink").classList.toggle("hidden", m !== "signin");
+  $("#backLink").classList.toggle("hidden", m === "signin");
+  $("#loginBtn").textContent = { signin: "Sign in", forgot: "Email me a reset link", setpw: "Save password and sign in", legacy: "Sign in" }[m];
+  $("#pw").autocomplete = m === "setpw" ? "new-password" : "current-password";
+  $("#loginErr").textContent = ""; $("#loginErr").classList.remove("ok");
+}
+$("#forgotLink").onclick = (e) => { e.preventDefault(); setLoginMode("forgot", "Reset your password", "We will email you a link to choose a new password"); };
+$("#legacyLink").onclick = (e) => { e.preventDefault(); setLoginMode("legacy", "Website editor", "Sign in with the shared password"); };
+$("#backLink").onclick = (e) => { e.preventDefault(); setLoginMode("signin"); };
 $("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  $("#loginErr").textContent = "";
-  const b = $("#loginBtn"); b.disabled = true; b.innerHTML = '<span class="spinner"></span>';
-  try { const j = await api("login", { password: $("#pw").value }); token = j.token; sessionStorage.setItem("psc_admin", token); await start(); }
-  catch (er) { $("#loginErr").textContent = er.message; }
-  b.disabled = false; b.textContent = "Sign in";
+  const err = $("#loginErr"); err.textContent = ""; err.classList.remove("ok");
+  const b = $("#loginBtn"); const label = b.textContent; b.disabled = true; b.innerHTML = '<span class="spinner"></span>';
+  const email = $("#em").value.trim(), pw = $("#pw").value;
+  try {
+    if (loginMode === "signin") {
+      const j = await idFetch("/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "password", username: email, password: pw }) });
+      saveAuth(j, email); await start();
+    } else if (loginMode === "forgot") {
+      await idFetch("/recover", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+      err.textContent = "Check your email for a link to reset your password."; err.classList.add("ok");
+    } else if (loginMode === "setpw") {
+      if (pw.length < 8) throw new Error("Please use at least 8 characters.");
+      if (pw !== $("#pw2").value) throw new Error("The two passwords are not the same.");
+      let j;
+      if (pendingToken.type === "invite") j = await idFetch("/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: pendingToken.token, type: "signup", password: pw }) });
+      else {
+        j = await idFetch("/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: pendingToken.token, type: "recovery" }) });
+        await idFetch("/user", { method: "PUT", headers: { "content-type": "application/json", authorization: "Bearer " + j.access_token }, body: JSON.stringify({ password: pw }) });
+      }
+      saveAuth(j);
+      history.replaceState(null, "", location.pathname);
+      await start();
+    } else if (loginMode === "legacy") {
+      const j = await api("login", { password: pw });
+      auth = { legacy: j.token }; localStorage.setItem("psc_auth", JSON.stringify(auth)); await start();
+    }
+  } catch (er) { err.textContent = er.message; }
+  b.disabled = false; b.textContent = label;
 });
+// links from Netlify emails arrive here with a token in the address
+{
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("invite_token")) { pendingToken = { type: "invite", token: h.get("invite_token") }; setLoginMode("setpw", "Welcome", "Choose a password for the website editor"); }
+  else if (h.get("recovery_token")) { pendingToken = { type: "recovery", token: h.get("recovery_token") }; setLoginMode("setpw", "Choose a new password", "Type your new password twice"); }
+  else setLoginMode("signin");
+}
 $("#logoutBtn").onclick = async () => {
   if (unsaved) await saveNow();
   logout();
@@ -83,7 +155,7 @@ async function start() {
     savedAt = d && d.savedAt ? d.savedAt : null;
     $("#login").classList.add("hidden");
     $("#app").classList.remove("hidden");
-    const qs = new URLSearchParams(location.hash.slice(1));
+    const qs = new URLSearchParams(location.hash.slice(1).includes("p=") ? location.hash.slice(1) : "");
     if (qs.get("p") && draft.pages[qs.get("p")]) file = qs.get("p");
     renderPanel();
     showPage(file);
@@ -94,10 +166,9 @@ async function start() {
     if (unsaved) scheduleSave(200);
   } catch (e) {
     toast(e.message, true);
-    if (!token) return;
   } finally { loading(false); }
 }
-if (token) { $("#login").classList.add("hidden"); start(); }
+if (auth && !pendingToken) { $("#login").classList.add("hidden"); start(); }
 
 function showBanner(text) {
   const b = $("#banner");

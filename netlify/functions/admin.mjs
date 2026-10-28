@@ -37,6 +37,15 @@ async function gh(path, opts = {}) {
   if (!r.ok) throw new Error(body.message || `GitHub error ${r.status}`);
   return body;
 }
+// personal logins: ask Netlify Identity who the bearer token belongs to
+async function identityUser(req) {
+  const h = req.headers.get("authorization") || "";
+  if (!h.startsWith("Bearer ")) return null;
+  try {
+    const r = await fetch(`${new URL(req.url).origin}/.netlify/identity/user`, { headers: { authorization: h } });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
 const safeFile = (f) => /^[a-z0-9][a-z0-9-]*\.html$/.test(f);
 const safeImg = (f) => /^[a-z0-9][a-z0-9-]*\.(webp|jpg|jpeg|png|svg|gif)$/.test(f);
 
@@ -110,7 +119,7 @@ export default async (req) => {
     if (!safeEqual(body.password || "", process.env.ADMIN_PASSWORD)) return json(401, { error: "Wrong password" });
     return json(200, { token: sign({ exp: Date.now() + TOKEN_TTL }) });
   }
-  if (!verify(req.headers.get("x-admin-token"))) return json(401, { error: "Please log in again" });
+  if (!verify(req.headers.get("x-admin-token")) && !(await identityUser(req))) return json(401, { error: "Please log in again" });
   if (!process.env.GITHUB_TOKEN) return json(500, { error: "GitHub connection is not set up yet." });
 
   try {

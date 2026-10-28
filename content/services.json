@@ -1,0 +1,110 @@
+{
+ "categories": [
+  {
+   "id": "home-cleaning",
+   "name": "Home Cleaning",
+   "title": "Home cleaning",
+   "intro": "For homeowners, tenants, landlords and Airbnb hosts across London and nearby Essex."
+  },
+  {
+   "id": "commercial-cleaning",
+   "name": "Commercial Cleaning",
+   "title": "Commercial cleaning",
+   "intro": "For offices, clinics, landlords and property managers. We visit first for a free walkthrough so the plan fits your premises."
+  }
+ ],
+ "services": [
+  {
+   "slug": "regular-home-cleaning",
+   "name": "Regular home cleaning",
+   "category": "home-cleaning",
+   "line": "Weekly, fortnightly or monthly cleaning by the same trusted team.",
+   "tag": "From &pound;66",
+   "icon": "<path d=\"M4 11 12 4l8 7\"/><path d=\"M6 10v10h12V10\"/><path d=\"M10 20v-5h4v5\"/>",
+   "img": "svc-regular-home-cleaning.webp"
+  },
+  {
+   "slug": "deep-cleaning",
+   "name": "Deep cleaning",
+   "category": "home-cleaning",
+   "line": "A detailed top to bottom clean when your home needs a full reset.",
+   "tag": "From &pound;120",
+   "icon": "<path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18\"/>",
+   "img": "svc-deep-cleaning.webp"
+  },
+  {
+   "slug": "end-of-tenancy-cleaning",
+   "name": "End of tenancy cleaning",
+   "category": "home-cleaning",
+   "line": "A checklist clean that gets the property ready for inspection.",
+   "tag": "Free quote",
+   "icon": "<circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"m11 12 9-9M17 6l3 3M15 8l2 2\"/>",
+   "img": "svc-end-of-tenancy-cleaning.webp"
+  },
+  {
+   "slug": "airbnb-cleaning",
+   "name": "Airbnb cleaning",
+   "category": "home-cleaning",
+   "line": "Fast, reliable turnovers between guests, ready for the next check in.",
+   "tag": "Free quote",
+   "icon": "<path d=\"M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5\"/><circle cx=\"7\" cy=\"11\" r=\"2\"/>",
+   "img": "svc-airbnb-cleaning.webp"
+  },
+  {
+   "slug": "hmo-cleaning",
+   "name": "HMO cleaning",
+   "category": "home-cleaning",
+   "line": "Shared kitchens, bathrooms and living areas in HMOs, for landlords.",
+   "tag": "Free walkthrough",
+   "icon": "<path d=\"M3 21V9l9-6 9 6v12\"/><path d=\"M9 21v-6h6v6M8 11h2M14 11h2\"/>",
+   "img": "svc-hmo-cleaning.webp"
+  },
+  {
+   "slug": "office-cleaning",
+   "name": "Office cleaning",
+   "category": "commercial-cleaning",
+   "line": "Offices, solicitors, accountants and care agency offices.",
+   "tag": "From &pound;25 per cleaner hour",
+   "icon": "<rect x=\"3\" y=\"7\" width=\"18\" height=\"13\" rx=\"2\"/><path d=\"M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18\"/>",
+   "img": "svc-office-cleaning.webp"
+  },
+  {
+   "slug": "clinic-cleaning",
+   "name": "Clinic cleaning",
+   "category": "commercial-cleaning",
+   "line": "Private, cosmetic, aesthetic and dental clinics, cleaned to a high standard.",
+   "tag": "From &pound;25 per hour",
+   "icon": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"M12 8v8M8 12h8\"/>",
+   "img": "svc-clinic-cleaning.webp"
+  },
+  {
+   "slug": "communal-cleaning",
+   "name": "Communal areas cleaning",
+   "category": "commercial-cleaning",
+   "line": "Entrances, hallways and stairs for landlords and property managers.",
+   "tag": "Free walkthrough",
+   "icon": "<path d=\"M4 20h4v-4h4v-4h4V8h4\"/><path d=\"M4 20h16\"/>",
+   "img": "svc-communal-cleaning.webp"
+  },
+  {
+   "slug": "post-construction-cleaning",
+   "name": "Post construction cleaning",
+   "category": "commercial-cleaning",
+   "line": "Dust and debris cleared after building or renovation work, ready to use.",
+   "tag": "Free walkthrough",
+   "icon": "<path d=\"M4 17a8 8 0 0 1 16 0\"/><path d=\"M2 17h20v3H2zM10 9V5h4v4\"/>",
+   "img": "svc-post-construction-cleaning.webp"
+  }
+ ],
+ "icons": {
+  "regular-home-cleaning": "<path d=\"M4 11 12 4l8 7\"/><path d=\"M6 10v10h12V10\"/><path d=\"M10 20v-5h4v5\"/>",
+  "deep-cleaning": "<path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18\"/>",
+  "end-of-tenancy-cleaning": "<circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"m11 12 9-9M17 6l3 3M15 8l2 2\"/>",
+  "airbnb-cleaning": "<path d=\"M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5\"/><circle cx=\"7\" cy=\"11\" r=\"2\"/>",
+  "office-cleaning": "<rect x=\"3\" y=\"7\" width=\"18\" height=\"13\" rx=\"2\"/><path d=\"M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18\"/>",
+  "clinic-cleaning": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"M12 8v8M8 12h8\"/>",
+  "hmo-cleaning": "<path d=\"M3 21V9l9-6 9 6v12\"/><path d=\"M9 21v-6h6v6M8 11h2M14 11h2\"/>",
+  "communal-cleaning": "<path d=\"M4 20h4v-4h4v-4h4V8h4\"/><path d=\"M4 20h16\"/>",
+  "post-construction-cleaning": "<path d=\"M4 17a8 8 0 0 1 16 0\"/><path d=\"M2 17h20v3H2zM10 9V5h4v4\"/>"
+ }
+}

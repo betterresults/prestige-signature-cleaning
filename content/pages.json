@@ -1,0 +1,145 @@
+{
+ "index.html": {
+  "title": "Professional Cleaning London | Prestige Signature Cleaning",
+  "desc": "Professional cleaning for homes, offices, clinics and managed properties across London, Romford, Havering, Brentwood and nearby Essex. DBS checked, fully insured. Free quote.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/hero-poster.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "page",
+  "label": "Home"
+ },
+ "about.html": {
+  "title": "About Us | Prestige Signature Cleaning Ltd",
+  "desc": "Meet Latifa Slimani and the team behind Prestige Signature Cleaning. Founder led cleaning across London, built on service, standards and accountability.",
+  "extra": "",
+  "header": "main",
+  "kind": "page",
+  "label": "About us"
+ },
+ "services.html": {
+  "title": "Our Cleaning Services London | Prestige Signature Cleaning",
+  "desc": "Home and commercial cleaning across London, Romford, Havering and Brentwood: regular, deep, end of tenancy, Airbnb, HMO, office, clinic, communal areas and post construction cleaning.",
+  "extra": "",
+  "header": "main",
+  "kind": "page",
+  "label": "Services"
+ },
+ "areas-we-cover.html": {
+  "title": "Cleaning in London, Romford and Brentwood | Prestige Signature Cleaning",
+  "desc": "Home and commercial cleaning across London, Romford, Havering, Brentwood and nearby Essex. Availability confirmed by postcode. Get your free quote.",
+  "extra": "",
+  "header": "main",
+  "kind": "page",
+  "label": "Areas we cover"
+ },
+ "contact.html": {
+  "title": "Contact Us | Prestige Signature Cleaning",
+  "desc": "Request a free cleaning quote from Prestige Signature Cleaning. Call, WhatsApp or email us. Home and commercial cleaning across London and nearby Essex.",
+  "extra": "",
+  "header": "main",
+  "kind": "page",
+  "label": "Contact"
+ },
+ "quote.html": {
+  "title": "Get a Free Cleaning Quote | Prestige Signature Cleaning",
+  "desc": "Free cleaning quotes for homes, offices and clinics across London, Romford, Havering, Brentwood and nearby Essex. Regular cleaning from &pound;66. DBS checked, fully insured.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/hero-poster.webp\" fetchpriority=\"high\">\n",
+  "header": "lp",
+  "kind": "page",
+  "label": "Quote landing page"
+ },
+ "privacy-policy.html": {
+  "title": "Privacy policy | Prestige Signature Cleaning",
+  "desc": "Privacy policy for Prestige Signature Cleaning Ltd.",
+  "extra": "",
+  "header": "main",
+  "kind": "legal",
+  "label": "Privacy policy"
+ },
+ "cookie-policy.html": {
+  "title": "Cookie policy | Prestige Signature Cleaning",
+  "desc": "Cookie policy for Prestige Signature Cleaning Ltd.",
+  "extra": "",
+  "header": "main",
+  "kind": "legal",
+  "label": "Cookie policy"
+ },
+ "website-terms.html": {
+  "title": "Website terms | Prestige Signature Cleaning",
+  "desc": "Website terms for Prestige Signature Cleaning Ltd.",
+  "extra": "",
+  "header": "main",
+  "kind": "legal",
+  "label": "Website terms"
+ },
+ "customer-policies.html": {
+  "title": "Customer policies | Prestige Signature Cleaning",
+  "desc": "Customer policies for Prestige Signature Cleaning Ltd.",
+  "extra": "",
+  "header": "main",
+  "kind": "legal",
+  "label": "Customer policies"
+ },
+ "regular-home-cleaning.html": {
+  "title": "Regular Home Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Weekly, fortnightly or monthly home cleaning across London, Romford, Havering and Brentwood by a DBS checked, fully insured team. Book your regular clean with Prestige Signature Cleaning.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-regular-home-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "deep-cleaning.html": {
+  "title": "Deep Cleaning in London | Prestige Signature Cleaning",
+  "desc": "A detailed top to bottom deep clean for homes across London, Romford, Havering and Brentwood. DBS checked, fully insured team. Book your deep clean with Prestige Signature Cleaning.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-deep-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "end-of-tenancy-cleaning.html": {
+  "title": "End of Tenancy Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Thorough end of tenancy cleaning for tenants, landlords and letting agents across London, Romford, Havering and Brentwood. Room by room checklist, DBS checked team. Book your clean.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-end-of-tenancy-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "airbnb-cleaning.html": {
+  "title": "Airbnb and Holiday Let Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Reliable Airbnb and holiday let cleaning across London, Romford, Havering and Brentwood. Guest ready turnovers by a DBS checked, fully insured team. Book with Prestige Signature Cleaning.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-airbnb-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "hmo-cleaning.html": {
+  "title": "HMO Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Regular HMO cleaning for landlords across London, Romford, Havering and Brentwood. Shared kitchens, bathrooms and living areas kept clean by a DBS checked, fully insured team.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-hmo-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "office-cleaning.html": {
+  "title": "Office Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Reliable office cleaning across London, Romford, Havering and Brentwood for small and medium offices, solicitors, accountants and care agency offices. Free walkthrough. DBS checked team.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-office-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "clinic-cleaning.html": {
+  "title": "Clinic and Aesthetic Clinic Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Professional cleaning for private, cosmetic and aesthetic clinics across London, Romford, Havering and Brentwood. From &pound;25 per cleaner hour, with a personalised cleaning checklist agreed after a walkthrough.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-clinic-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "communal-cleaning.html": {
+  "title": "Communal Areas Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Regular cleaning of communal entrances, hallways and stairs for landlords and property managers across London, Romford, Havering and Brentwood. Free walkthrough. DBS checked team.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-communal-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ },
+ "post-construction-cleaning.html": {
+  "title": "Post Construction and After Builders Cleaning in London | Prestige Signature Cleaning",
+  "desc": "Post construction and after builders cleaning across London, Romford, Havering and Brentwood for homes and workplaces. Dust and debris cleared, ready to use. Free walkthrough.",
+  "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-post-construction-cleaning.webp\" fetchpriority=\"high\">\n",
+  "header": "main",
+  "kind": "service"
+ }
+}

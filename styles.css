@@ -48,7 +48,7 @@ p{margin:0 0 1em;max-width:68ch}
 /* buttons */
 .btn{display:inline-block;font-family:var(--sans);font-weight:600;font-size:1rem;text-decoration:none;padding:15px 28px;border-radius:999px;border:2px solid transparent;cursor:pointer;transition:background .2s,color .2s}
 .btn-gold{background:var(--gold);color:#fff}
-.btn-gold:hover{background:#9A7A48}
+.btn-gold:hover{background:var(--gold-strong);filter:brightness(.88)}
 .btn-green{background:var(--green-700);color:#fff}
 .btn-green:hover{background:var(--green-900)}
 .btn-line{border-color:var(--green-700);color:var(--green-700);background:transparent}
@@ -723,7 +723,7 @@ video.h4-bg{animation:none;transform:none;object-fit:cover}
 /* accessibility: contrast + heading fixes */
 :root{--gold-strong:#8A6A33}
 .btn-gold,.h4-stat,.map-badge,.why-photo .stat{background:var(--gold-strong)}
-.btn-gold:hover{background:#735828}
+.btn-gold:hover{background:var(--gold-strong);filter:brightness(.88)}
 .stars{color:var(--gold-strong)}
 .rq-big .stars,.bg-green .stars,.rv-feat .stars{color:var(--gold-soft)}
 .mh{font-family:var(--serif);font-size:1.1rem;color:var(--green-900);margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}

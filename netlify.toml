@@ -1,5 +1,9 @@
 [build]
-  publish = "."
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [[headers]]
   for = "/fonts/*"

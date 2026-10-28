@@ -1,0 +1,15 @@
+{
+ "theme": {},
+ "business": {
+  "phone": "07903 788330",
+  "phoneIntl": "+447903788330",
+  "whatsapp": "https://wa.me/447903788330",
+  "email": "info@prestigesignaturecleaning.co.uk",
+  "quote": "https://app.dilvon.com/book/prestige-signature-cleaning/choose-your-service",
+  "facebook": "https://www.facebook.com/p/Prestige-Signature-Cleaning-61587132240936/",
+  "instagram": "https://www.instagram.com/prestige_signature_cleaning/",
+  "tiktok": "https://www.tiktok.com/@signatureprestigeclean",
+  "footerText": "Professionally managed cleaning for homes, offices and clinics across London and nearby Essex."
+ },
+ "embedTemplate": "<iframe\n  id=\"booking-form-contact-us\"\n  src=\"https://app.dilvon.com/book/prestige-signature-cleaning/contact-us?embedded=true\"\n  style=\"width:100%;border:0;min-height:600px;display:block;\"\n  loading=\"lazy\"\n  title=\"CONTACT US\"\n></iframe>\n<script>\n  (function () {\n    var formOrigin = new URL(\"https://app.dilvon.com/book/prestige-signature-cleaning/contact-us?embedded=true\").origin;\n    var f = document.getElementById('booking-form-contact-us');\n    if (f) {\n      var src = new URL(f.getAttribute('src'));\n      src.searchParams.set('embed_origin', window.location.origin);\n      f.setAttribute('src', src.toString());\n    }\n    window.addEventListener('message', function (e) {\n      if (e.origin !== formOrigin) return;\n      if (!e.data) return;\n      if (e.data.type === 'lovable-form-resize') {\n        if (f && typeof e.data.height === 'number') {\n          f.style.height = e.data.height + 'px';\n        }\n      }\n      if (e.data.type === 'lovable-form-redirect' && typeof e.data.url === 'string') {\n        try {\n          var target = new URL(e.data.url, window.location.href);\n          if (target.origin !== window.location.origin && target.origin !== formOrigin) return;\n          if (e.data.openInNewTab === true) {\n            window.open(target.toString(), '_blank', 'noopener,noreferrer');\n          } else {\n            window.location.href = target.toString();\n          }\n        } catch (_) {}\n      }\n    });\n  })();\n</script>\n"
+}

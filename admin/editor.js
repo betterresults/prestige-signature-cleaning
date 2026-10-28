@@ -680,24 +680,29 @@ function renderPanel() {
 function pageItem(f) {
   return `<li data-f="${f}" class="${f === file ? "on" : ""}"><span class="t">${esc(pageLabel(f))}</span><span class="chg hidden"></span><button class="gear" data-seo="${f}" title="Page settings">⚙</button></li>`;
 }
+const openGroups = new Set(["main"]);
+function group(id, title, files) {
+  const open = openGroups.has(id) || files.includes(file);
+  if (open) openGroups.add(id);
+  return `<details class="pgrp" data-g="${esc(id)}" ${open ? "open" : ""}><summary>${esc(title)}<span class="cnt">${files.length}</span></summary><ul class="plist">${files.map(pageItem).join("") || '<li class="hint">No pages yet</li>'}</ul></details>`;
+}
 function pagesPanel() {
   const m = draft.pages;
   const main = Object.keys(m).filter((f) => m[f].kind === "page");
   const legal = Object.keys(m).filter((f) => m[f].kind === "legal");
-  let html = `<div class="grp">Main pages</div><ul class="plist">${main.map(pageItem).join("")}</ul>`;
+  let html = group("main", "Main pages", main);
   for (const c of draft.services.categories) {
-    const items = catServices(rstate(), c.id).map((s) => s.slug + ".html").filter((f) => m[f]);
-    html += `<div class="grp">${esc(c.name)}</div><ul class="plist">${items.map(pageItem).join("") || '<li class="hint">No services yet</li>'}</ul>`;
+    html += group("cat:" + c.id, c.name, catServices(rstate(), c.id).map((s) => s.slug + ".html").filter((f) => m[f]));
   }
   const orphan = Object.keys(m).filter((f) => m[f].kind === "service" && !draft.services.services.some((s) => s.slug + ".html" === f && draft.services.categories.some((c) => c.id === s.category)));
-  if (orphan.length) html += `<div class="grp">Other</div><ul class="plist">${orphan.map(pageItem).join("")}</ul>`;
-  html += `<div class="grp">Legal</div><ul class="plist">${legal.map(pageItem).join("")}</ul>`;
+  if (orphan.length) html += group("other", "Other", orphan);
+  html += group("legal", "Legal pages", legal);
   html += `<div style="margin-top:16px"><button class="btn sm full" id="newSvcBtn">+ New service page</button></div>`;
   return html;
 }
 function servicesPanel() {
   const st = rstate();
-  let html = `<p class="hint">Categories and services feed the menu, footer, service cards and “You might also need” on every page automatically.</p>`;
+  let html = `<button class="btn primary sm full" id="newCatBtn" style="margin-bottom:10px">+ New category</button><p class="hint">Categories and services feed the menu, footer, service cards and “You might also need” on every page automatically.</p>`;
   draft.services.categories.forEach((c, i) => {
     const items = catServices(st, c.id);
     html += `<div class="card"><h4><span class="cn">📁 ${esc(c.name)}</span>
@@ -706,7 +711,6 @@ function servicesPanel() {
         <button class="mini" data-sup="${s.slug}" title="Move up">↑</button><button class="mini" data-sdown="${s.slug}" title="Move down">↓</button><button class="mini" data-sedit="${s.slug}" title="Edit service">✎</button></div>`).join("") || '<p class="hint">No services yet.</p>'}
       <button class="btn sm full" data-snew="${c.id}">+ Add a service to ${esc(c.name)}</button></div>`;
   });
-  html += `<button class="btn primary sm full" id="newCatBtn">+ New category</button>`;
   return html;
 }
 function designPanel() {
@@ -728,6 +732,7 @@ function settingsPanel() {
 function bindPanel() {
   const p = $("#panel");
   p.querySelectorAll(".plist li[data-f]").forEach((li) => (li.onclick = (e) => { if (e.target.closest("[data-seo]")) return; showPage(li.dataset.f); }));
+  p.querySelectorAll("details.pgrp").forEach((d) => d.addEventListener("toggle", () => { if (d.open) openGroups.add(d.dataset.g); else openGroups.delete(d.dataset.g); }));
   p.querySelectorAll("[data-seo]").forEach((b) => (b.onclick = () => pageSettings(b.dataset.seo)));
   if ($("#newSvcBtn")) $("#newSvcBtn").onclick = () => newService();
   // services tab

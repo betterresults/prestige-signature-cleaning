@@ -67,6 +67,14 @@ textarea.inp{resize:vertical;min-height:70px}
 .panel{overflow:auto;padding:14px;flex:1}
 .grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a958e;margin:16px 0 6px}
 .grp:first-child{margin-top:2px}
+.pgrp{border-bottom:1px solid #efebe2;padding:2px 0}
+.pgrp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 6px;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b766f;border-radius:8px}
+.pgrp>summary::-webkit-details-marker{display:none}
+.pgrp>summary::before{content:"▸";font-size:12px;transition:transform .15s;color:#9aa49e}
+.pgrp[open]>summary::before{transform:rotate(90deg)}
+.pgrp>summary:hover{background:#f6f3ec}
+.pgrp .cnt{margin-left:auto;background:#f1eee6;color:#6b766f;border-radius:999px;padding:1px 8px;font-size:11px;letter-spacing:0}
+.pgrp .plist{padding:0 0 8px}
 .plist{list-style:none;margin:0;padding:0}
 .plist li{display:flex;align-items:center;gap:6px;border-radius:9px;padding:7px 9px;cursor:pointer;color:#2b3530}
 .plist li:hover{background:#f4f1ea}

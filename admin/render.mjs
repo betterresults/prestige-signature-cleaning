@@ -182,7 +182,7 @@ export function renderBlock(state, name, file) {
     case "related": return related(state, file.replace(/\.html$/, ""));
     case "catsections": return catSections(state);
     case "jump": return state.services.categories.filter((c) => catServices(state, c.id).length).map((c) => `<a href="#${c.id}">${c.title || c.name}</a>`).join("");
-    case "blog": return blogCards(state, posts(state, arg || "all"));
+    case "blog": return blogCards(state, arg === "latest" ? posts(state).slice(0, 3) : posts(state, arg || "all"));
     case "blogcats": return blogCats(state, arg || "all");
     case "bloghero": return blogCatHero(state, arg);
     case "posthead": return postHead(state, file);

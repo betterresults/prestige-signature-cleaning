@@ -922,3 +922,4 @@ video.h4-bg{animation:none;transform:none;object-fit:cover}
 .post-sec-cta{padding:24px 0 96px}
 @media (max-width:1020px){.blog-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:620px){.blog-grid{grid-template-columns:1fr}.post-hero{padding-top:40px}.post-cover{transform:translateY(24px);margin-top:-24px}.post-cover img{border-radius:16px}.post-body{padding-top:40px}.post-body p,.post-body li{font-size:1.02rem}}
+@media (max-width:720px){#blog .blog-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;gap:14px;margin:0 -16px;padding:4px 16px 14px;scrollbar-width:none}#blog .blog-grid::-webkit-scrollbar{display:none}#blog .blog-card{flex:0 0 82%;scroll-snap-align:start}}

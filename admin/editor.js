@@ -1,4 +1,5 @@
 import { renderPage, minifyCss, THEME_VARS, catServices } from "./render.mjs";
+import { SECTIONS, THUMBS } from "./sections.mjs";
 
 const API = "/api/admin";
 const $ = (s, r = document) => r.querySelector(s);
@@ -329,6 +330,11 @@ section.pse-sec-sel{box-shadow:inset 0 0 0 3px #2563eb}
 .pse-chip:hover{background:#1d4ed8}
 .pse-tip{position:fixed;z-index:2147483647;background:#1f2937;color:#fff;font:500 12px/1.4 system-ui,sans-serif;padding:7px 10px;border-radius:8px;max-width:280px;pointer-events:none;display:none}
 .room-panel[hidden]{display:none}
+.pse-add{position:absolute;z-index:2147483646;transform:translate(-50%,-50%);background:#fff;color:#2563eb;border:2px solid #2563eb;font:700 12px/1 system-ui,sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);display:none;white-space:nowrap}
+.pse-add:hover{background:#2563eb;color:#fff}
+.ps-video::after{content:"Click to change the video";position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px;color:#fff;font:600 13px system-ui,sans-serif;background:linear-gradient(transparent 60%,rgba(0,0,0,.45));cursor:pointer;opacity:0;transition:opacity .2s;z-index:2}
+.ps-video:hover::after,.ps-video.pse-sel::after{opacity:1}
+.ps-video.pse-sel{outline:3px solid #B08D57;outline-offset:3px}
 `;
 
 function attachEditor(doc) {
@@ -338,6 +344,7 @@ function attachEditor(doc) {
   markBlocks(main);
   const chip = doc.createElement("div"); chip.className = "pse-chip"; chip.textContent = "⚙ Section"; doc.body.appendChild(chip);
   const tip = doc.createElement("div"); tip.className = "pse-tip"; doc.body.appendChild(tip);
+  const add = doc.createElement("button"); add.className = "pse-add"; add.type = "button"; add.textContent = "+ Add section"; doc.body.appendChild(add);
   let hoverEl = null, hoverSec = null;
 
   doc.addEventListener("mouseover", (e) => {
@@ -363,17 +370,19 @@ function attachEditor(doc) {
         const r = sec.getBoundingClientRect();
         chip.style.top = r.top + doc.defaultView.scrollY + "px"; chip.style.left = r.left + "px"; chip.style.display = sec.dataset.pseBlock ? "none" : "block";
         chip._sec = sec;
-      } else chip.style.display = "none";
+        add.style.top = r.bottom + doc.defaultView.scrollY + "px"; add.style.left = r.left + r.width / 2 + "px"; add.style.display = "block"; add._sec = sec;
+      } else { chip.style.display = "none"; }
     }
   });
   doc.addEventListener("mousemove", (e) => { if (tip.style.display === "block") { tip.style.left = Math.min(e.clientX + 14, doc.defaultView.innerWidth - 300) + "px"; tip.style.top = e.clientY + 16 + "px"; } });
-  const placeChip = () => { const sec = chip._sec; if (!sec || chip.style.display === "none") return; const r = sec.getBoundingClientRect(); chip.style.top = r.top + doc.defaultView.scrollY + "px"; chip.style.left = r.left + "px"; };
+  const placeChip = () => { const sec = chip._sec; if (!sec) return; const r = sec.getBoundingClientRect(); chip.style.top = r.top + doc.defaultView.scrollY + "px"; chip.style.left = r.left + "px"; add.style.top = r.bottom + doc.defaultView.scrollY + "px"; add.style.left = r.left + r.width / 2 + "px"; };
   doc.defaultView.addEventListener("scroll", placeChip, { passive: true });
   chip.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); if (chip._sec) select("section", chip._sec); });
+  add.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); if (add._sec) openLibrary(add._sec, "after"); });
 
   doc.addEventListener("click", (e) => {
     const t = e.target;
-    if (t === chip) return;
+    if (t === chip || t === add) return;
     const a = t.closest("a");
     if (a && a.getAttribute("contenteditable") !== "true") e.preventDefault();
     if (!main.contains(t)) {
@@ -383,6 +392,8 @@ function attachEditor(doc) {
     if (t.closest("[data-pse-block]")) { e.preventDefault(); deselect(); return; }
     const tabBtn = t.closest('[role="tab"]');
     if (tabBtn) switchTab(tabBtn);
+    const vid = t.closest(".ps-video");
+    if (vid) { e.preventDefault(); select("video", vid); return; }
     if (t.tagName === "IMG") { e.preventDefault(); select("image", t); return; }
     const target = pickTarget(t);
     if (target) {
@@ -615,6 +626,18 @@ function renderInspector() {
       <p class="hint">Or choose one you already have:</p><div class="lib" id="imLib"></div></div>
       <div class="sec"><h5>Description for Google and screen readers</h5><input class="inp" id="imAlt" value="${esc(el.getAttribute("alt") || "")}"></div>
       ${itemTools}`;
+  } else if (sel.kind === "video") {
+    const cur = el.querySelector("iframe") ? (el.querySelector("iframe").getAttribute("src") || "") : (el.querySelector("video")?.getAttribute("src") || "");
+    const isLink = !!el.querySelector("iframe");
+    body = `
+      <p class="hint">${isLink ? "Showing a video from " + (cur.includes("vimeo") ? "Vimeo" : "YouTube") + "." : cur.includes("video/hero") ? "Showing your team video." : "Showing your uploaded video."}</p>
+      <div class="sec"><h5>YouTube or Vimeo link</h5>
+        <input class="inp" id="vLink" placeholder="Paste the link to the video" value="${isLink ? esc(watchUrl(cur)) : ""}">
+        <div class="tool-row" style="margin-top:6px"><button class="btn primary sm" id="vUse">Use this link</button></div>
+        <p class="hint">Best choice for longer videos. Copy the link from the address bar on YouTube or Vimeo.</p></div>
+      <div class="sec"><h5>Or upload a short clip</h5>
+        <div class="tool-row"><button class="btn sm" id="vUp">⬆ Upload MP4</button><button class="btn sm" id="vTeam">Use team video</button></div>
+        <p class="hint">MP4 under 4 MB, about 20 to 30 seconds.</p></div>`;
   } else if (sel.kind === "section") {
     const cs = win.getComputedStyle(el);
     const bgImg = el.querySelector(":scope img.h4-bg, :scope .h4-bg");
@@ -628,9 +651,10 @@ function renderInspector() {
       </div>
       ${bgImg && bgImg.tagName === "IMG" ? `<div class="sec"><h5>Background photo</h5><button class="btn sm full" id="sBgImg">Change background photo</button></div>` : ""}
       <div class="sec"><h5>Section</h5><div class="tool-row"><button class="btn sm" id="sUp">↑ Move up</button><button class="btn sm" id="sDown">↓ Move down</button></div>
-      <div class="tool-row" style="margin-top:6px"><button class="btn sm" id="sDup">Duplicate</button><button class="btn sm danger" id="sDel">Delete section</button></div></div>`;
+      <div class="tool-row" style="margin-top:6px"><button class="btn sm" id="sDup">Duplicate</button><button class="btn sm danger" id="sDel">Delete section</button></div></div>
+      <div class="sec"><h5>Add a new section</h5><div class="tool-row"><button class="btn sm" id="sAddUp">+ Above</button><button class="btn sm primary" id="sAddDown">+ Below</button></div></div>`;
   }
-  const title = sel.kind === "section" ? "Section" : sel.kind === "image" ? "Photo" : ({ A: el.classList.contains("btn") ? "Button" : "Link", H1: "Main heading", H2: "Heading", H3: "Small heading", P: "Paragraph", LI: "List item", SUMMARY: "Question", BUTTON: "Tab" }[el.tagName] || "Text");
+  const title = sel.kind === "section" ? "Section" : sel.kind === "video" ? "Video" : sel.kind === "image" ? "Photo" : ({ A: el.classList.contains("btn") ? "Button" : "Link", H1: "Main heading", H2: "Heading", H3: "Small heading", P: "Paragraph", LI: "List item", SUMMARY: "Question", BUTTON: "Tab" }[el.tagName] || "Text");
   box.innerHTML = `<div class="hd">${title}<span class="sp"></span><button class="mini" id="inspX">✕</button></div><div class="bd">${body}</div>`;
   $("#main").classList.remove("noinspect"); fit();
   $("#inspX").onclick = () => deselect();
@@ -658,7 +682,7 @@ function renderInspector() {
   }
   if (sel.kind === "image") {
     const lib = $("#imLib");
-    const all = [...draft.images.map((n) => ({ n, src: "/api/draft-image/" + n })), ...repoImages.filter((n) => !/^(favicon|logo)/.test(n)).map((n) => ({ n, src: "/images/" + n }))];
+    const all = [...draft.images.filter((n) => !/\.(mp4|webm)$/.test(n)).map((n) => ({ n, src: "/api/draft-image/" + n })), ...repoImages.filter((n) => !/^(favicon|logo)/.test(n)).map((n) => ({ n, src: "/images/" + n }))];
     lib.innerHTML = all.map((i) => `<img src="${i.src}" data-n="${esc(i.n)}" loading="lazy" title="${esc(i.n)}">`).join("");
     lib.onclick = (e) => { const t = e.target.closest("img[data-n]"); if (t) setImage(t.dataset.n); };
     $("#imUp").onclick = () => pickImage((n) => setImage(n));
@@ -672,10 +696,22 @@ function renderInspector() {
     bindColor("sGd", (v) => { el.style.setProperty("--gold", v); el.style.setProperty("--gold-strong", v); syncPage(); });
     $("#sReset").onclick = () => { ["background", "color", "--green-900", "--gold", "--gold-strong"].forEach((p) => el.style.removeProperty(p)); if (!el.getAttribute("style")) el.removeAttribute("style"); syncPage(); renderInspector(); };
     if ($("#sBgImg")) $("#sBgImg").onclick = () => select("image", el.querySelector("img.h4-bg"));
+    $("#sAddUp").onclick = () => openLibrary(el, "before");
+    $("#sAddDown").onclick = () => openLibrary(el, "after");
     $("#sUp").onclick = () => moveUnit(el, -1);
     $("#sDown").onclick = () => moveUnit(el, 1);
     $("#sDup").onclick = () => { const c = el.cloneNode(true); c.classList.remove("pse-sec-sel", "pse-sec-hover"); el.after(c); syncPage(); toast("Section duplicated"); };
     $("#sDel").onclick = async () => { if (await confirmBox("Delete this section?", "It will be removed from this page. You can still discard your changes before publishing.", "Delete", "danger")) { el.remove(); sel = null; syncPage(); renderInspector(); } };
+  }
+  if (sel.kind === "video") {
+    $("#vUse").onclick = () => {
+      const u = embedUrl($("#vLink").value.trim());
+      if (!u) return toast("That link doesn't look like a YouTube or Vimeo video.", true);
+      el.innerHTML = `<iframe src="${u}" title="Video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      syncPage(); renderInspector(); toast("Video changed");
+    };
+    $("#vTeam").onclick = () => { el.innerHTML = `<video src="video/hero-1280.mp4" poster="images/hero-poster.webp" controls playsinline preload="metadata"></video>`; syncPage(); renderInspector(); };
+    $("#vUp").onclick = () => pickVideo((f) => { el.innerHTML = `<video src="/api/draft-image/${f}" controls playsinline preload="metadata"></video>`; syncPage(); renderInspector(); toast("Video uploaded"); });
   }
   if (item) {
     $("#iUp").onclick = () => { const p = item.previousElementSibling; if (p && p.tagName === item.tagName) { p.before(item); syncPage(); } };
@@ -700,6 +736,62 @@ function moveUnit(el, dir) {
   }
   syncPage();
   el.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+/* ---------------- add section library ---------------- */
+function openLibrary(ref, where) {
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal wide"><div class="mh">Add a section<span class="sp"></span><button class="mini" data-x>✕</button></div>
+    <div class="mb"><p class="hint" style="margin-top:0">Pick a design. It is added ${where === "before" ? "above" : "below"} the section you chose, and you can change every word, photo and colour after.</p>
+    <div class="slib">${SECTIONS.map((t) => `<button class="scard" data-id="${t.id}">${THUMBS[t.thumb] || ""}<b>${esc(t.name)}</b><span>${esc(t.desc)}</span></button>`).join("")}</div></div></div>`;
+  const close = () => bg.remove();
+  bg.addEventListener("mousedown", (e) => { if (e.target === bg) close(); });
+  bg.querySelector("[data-x]").onclick = close;
+  bg.querySelectorAll(".scard").forEach((b) => (b.onclick = () => { close(); insertSection(ref, where, SECTIONS.find((t) => t.id === b.dataset.id)); }));
+  document.body.appendChild(bg);
+}
+function insertSection(ref, where, tpl) {
+  if (!tpl || !fdoc) return;
+  const t = fdoc.createElement("template"); t.innerHTML = tpl.html.trim();
+  const node = t.content.firstElementChild;
+  // automatic blocks sit between comment markers; keep the new section outside them
+  let anchor = ref;
+  if (ref.dataset.pseBlock) {
+    if (where === "after") { let x = ref; while (x && !(x.nodeType === 8 && x.nodeValue === "@/b")) x = x.nextSibling; if (x) anchor = x; }
+    else { let x = ref; while (x && !(x.nodeType === 8 && x.nodeValue.startsWith("@b:"))) x = x.previousSibling; if (x) anchor = x; }
+  }
+  if (where === "before") anchor.before(node); else anchor.after(node);
+  syncPage();
+  node.scrollIntoView({ block: "center", behavior: "smooth" });
+  select("section", node);
+  toast(`“${tpl.name}” added. Click any text or photo in it to change it.`);
+}
+function embedUrl(u) {
+  let m = u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  if (m) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+  m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return `https://player.vimeo.com/video/${m[1]}`;
+  return null;
+}
+function watchUrl(u) {
+  let m = u.match(/embed\/([\w-]{11})/); if (m) return `https://www.youtube.com/watch?v=${m[1]}`;
+  m = u.match(/player\.vimeo\.com\/video\/(\d+)/); if (m) return `https://vimeo.com/${m[1]}`;
+  return u;
+}
+function pickVideo(cb) {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = "video/mp4,video/webm";
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    if (f.size > 4e6) return toast("That video is over 4 MB. Please upload it to YouTube and paste the link instead.", true);
+    loading(true); toast("Uploading video…");
+    try {
+      const data = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+      const j = await api("uploadImage", { name: f.name, ext: /webm/.test(f.type) ? "webm" : "mp4", data });
+      draft.images.push(j.file); cb(j.file);
+    } catch (e) { toast(e.message, true); }
+    loading(false);
+  };
+  inp.click();
 }
 function setImage(name) {
   if (!sel || sel.kind !== "image") return;

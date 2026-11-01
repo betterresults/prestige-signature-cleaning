@@ -47,7 +47,8 @@ async function identityUser(req) {
   } catch { return null; }
 }
 const safeFile = (f) => /^[a-z0-9][a-z0-9-]*\.html$/.test(f);
-const safeImg = (f) => /^[a-z0-9][a-z0-9-]*\.(webp|jpg|jpeg|png|svg|gif)$/.test(f);
+const safeImg = (f) => /^[a-z0-9][a-z0-9-]*\.(webp|jpg|jpeg|png|svg|gif|mp4|webm)$/.test(f);
+const MIME = { svg: "image/svg+xml", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", mp4: "video/mp4", webm: "video/webm" };
 
 async function head() {
   const ref = await gh(`git/ref/heads/${BRANCH}`);
@@ -140,12 +141,12 @@ export default async (req) => {
     }
     if (action === "uploadImage") {
       const base = String(body.name || "image").toLowerCase().replace(/\.[a-z0-9]+$/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "image";
-      const ext = /^(webp|jpg|jpeg|png|svg|gif)$/.test(body.ext) ? body.ext : "webp";
+      const ext = /^(webp|jpg|jpeg|png|svg|gif|mp4|webm)$/.test(body.ext) ? body.ext : "webp";
       const b64 = String(body.data || "").replace(/^data:[^,]+,/, "");
-      if (b64.length > 8_000_000) throw new Error("Image is too large");
+      if (b64.length > 5_800_000) throw new Error("This file is too large");
       const file = `${base}-${Date.now().toString(36)}.${ext}`;
       const buf = Buffer.from(b64, "base64");
-      await s.set(`img/${file}`, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), { metadata: { type: ext === "svg" ? "image/svg+xml" : `image/${ext === "jpg" ? "jpeg" : ext}` } });
+      await s.set(`img/${file}`, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), { metadata: { type: MIME[ext] } });
       return json(200, { file });
     }
     if (action === "publish") {

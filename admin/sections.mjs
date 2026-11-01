@@ -92,7 +92,7 @@ export const SECTIONS = [
     thumb: "stats",
     html: `<section class="h4-sec ps-sec"><div class="wrap">
 <div class="ps-stats">
-<div><strong>20+</strong><span>years of experience</span></div>
+<div><strong>20+</strong><span>years in hospitality, healthcare and customer service</span></div>
 <div><strong>100%</strong><span>DBS checked team</span></div>
 <div><strong>5.0</strong><span>rated on Google</span></div>
 <div><strong>7</strong><span>days a week</span></div>

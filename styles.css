@@ -923,3 +923,25 @@ video.h4-bg{animation:none;transform:none;object-fit:cover}
 @media (max-width:1020px){.blog-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:620px){.blog-grid{grid-template-columns:1fr}.post-hero{padding-top:40px}.post-cover{transform:translateY(24px);margin-top:-24px}.post-cover img{border-radius:16px}.post-body{padding-top:40px}.post-body p,.post-body li{font-size:1.02rem}}
 @media (max-width:720px){#blog .blog-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;gap:14px;margin:0 -16px;padding:4px 16px 14px;scrollbar-width:none}#blog .blog-grid::-webkit-scrollbar{display:none}#blog .blog-card{flex:0 0 82%;scroll-snap-align:start}}
+.h4-stat{max-width:240px}
+.h4-stat span{display:block;font-size:.78rem;letter-spacing:.04em;opacity:.9;margin-bottom:4px}
+.price-pill strong{font-size:1.3rem}
+/* real work videos */
+.rw-sec{background:var(--green-900)}
+.rw-sec h2{color:#fff}
+.rw-sec .h4-head p{color:#CFDCD2}
+.rw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:960px}
+.ps-video-tall{aspect-ratio:9/16;box-shadow:0 24px 50px rgba(0,0,0,.3)}
+.ps-video-tall video{object-fit:cover}
+@media (max-width:720px){.rw-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;margin:0 -16px;padding:4px 16px 14px;scrollbar-width:none}.rw-grid::-webkit-scrollbar{display:none}.rw-grid .ps-video{flex:0 0 72%;scroll-snap-align:start}}
+/* mobile quote bar */
+.m-quote{display:none}
+@media (max-width:1020px){
+.m-quote{display:flex;align-items:center;justify-content:center;position:fixed;left:16px;right:92px;bottom:22px;height:56px;border-radius:999px;background:var(--gold-strong);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:60}
+body{padding-bottom:96px}
+.wa-float{right:16px;width:58px;height:58px;bottom:21px}
+}
+.rw-sec .h4-head{justify-content:center;text-align:center}
+.rw-sec .h4-head p{margin:0 auto}
+.rw-grid{margin:0 auto}
+@media (max-width:1020px){.m-quote{transform:translateY(140%);transition:transform .3s ease}.m-quote.show{transform:none}}

@@ -126,6 +126,9 @@ ${socialIcons(b)}
 </div>
 </div></footer>
 <a class="wa-float" href="${b.whatsapp}" aria-label="Chat with us on WhatsApp">${WA_ICON}</a>
+<a class="m-quote" href="${b.quote}">Get Your Free Quote</a>
+<script>(function(){var q=document.querySelector(".m-quote");function t(){q.classList.toggle("show",scrollY>window.innerHeight*.6)}if(q){addEventListener("scroll",t,{passive:true});t()}})()</script>
+<script>(function(){var v=document.querySelectorAll("video[data-autoplay]");if(!v.length||!("IntersectionObserver" in window))return;var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.preload="auto";var p=e.target.play();if(p&&p.catch)p.catch(function(){})}else e.target.pause()})},{threshold:.4});v.forEach(function(x){o.observe(x)})})()</script>
 </body>
 </html>
 `;

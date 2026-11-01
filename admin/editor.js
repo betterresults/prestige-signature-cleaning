@@ -152,7 +152,7 @@ async function start() {
       const b = JSON.parse(localStorage.getItem(LS) || "null");
       if (b && b.draft && (!d || (b.at > Date.parse(d.savedAt || 0)))) { d = b.draft; unsaved = true; }
     } catch {}
-    draft = d ? { site: d.site, services: d.services, pages: d.pages, html: d.html, images: d.images || [] } : { ...clone(live), images: [] };
+    draft = d ? mergeDraft(d, live) : { ...clone(live), images: [], base: baseOf(live) };
     savedAt = d && d.savedAt ? d.savedAt : null;
     $("#login").classList.add("hidden");
     $("#app").classList.remove("hidden");
@@ -168,6 +168,26 @@ async function start() {
   } catch (e) {
     toast(e.message, true);
   } finally { loading(false); }
+}
+// fingerprints of the published site when the draft started, so website updates made since then are not lost
+const hash = (str) => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const fp = (src, f) => hash((src.html[f] || "") + JSON.stringify(src.pages[f] || {}));
+function baseOf(src) { const h = {}; for (const f of Object.keys(src.pages)) h[f] = fp(src, f); return { h, site: hash(JSON.stringify(src.site)), services: hash(JSON.stringify(src.services)) }; }
+function mergeDraft(d, lv) {
+  const out = { site: d.site, services: d.services, pages: d.pages, html: d.html, images: d.images || [] };
+  const base = d.base || { h: Object.fromEntries(Object.keys(d.pages).map((f) => [f, null])) };
+  for (const f of Object.keys(lv.pages)) {
+    const mine = f in out.pages;
+    if (!mine && !(f in base.h)) { out.pages[f] = clone(lv.pages[f]); out.html[f] = lv.html[f]; }
+    else if (mine && base.h[f] && base.h[f] === fp(out, f)) { out.pages[f] = clone(lv.pages[f]); out.html[f] = lv.html[f]; }
+  }
+  if (base.site && base.site === hash(JSON.stringify(out.site))) out.site = clone(lv.site);
+  if (base.services && base.services === hash(JSON.stringify(out.services))) out.services = clone(lv.services);
+  if (!out.site.seo && lv.site.seo) out.site.seo = clone(lv.site.seo);
+  out.base = baseOf(lv);
+  // keep her own edits marked as changed against the new base
+  for (const f of Object.keys(out.pages)) if (lv.pages[f] && fp(out, f) !== fp(lv, f)) out.base.h[f] = d.base?.h?.[f] || null;
+  return out;
 }
 if (auth && !pendingToken) { $("#login").classList.add("hidden"); start(); }
 
@@ -194,6 +214,7 @@ function changeList() {
   }
   if (JSON.stringify(draft.site.theme) !== JSON.stringify(live.site.theme)) out.push({ text: "Website colours" });
   if (JSON.stringify(draft.site.business) !== JSON.stringify(live.site.business)) out.push({ text: "Business details" });
+  if (JSON.stringify(draft.site.seo || {}) !== JSON.stringify(live.site.seo || {})) out.push({ text: "SEO settings" });
   if (JSON.stringify(draft.services) !== JSON.stringify(live.services)) out.push({ text: "Services and categories" });
   return out;
 }
@@ -892,10 +913,19 @@ function designPanel() {
 function settingsPanel() {
   const b = draft.site.business;
   const f = (k, label) => `<label class="field"><span>${label}</span><input class="inp" data-biz="${k}" value="${esc(b[k] || "")}"></label>`;
+  const seo = draft.site.seo || {};
+  const sf = (k, label) => `<label class="field"><span>${label}</span><input class="inp" data-seok="${k}" value="${esc(seo[k] || "")}"></label>`;
   return `<p class="hint">Used in the menu button, footer and contact links on every page.</p>
     ${f("phone", "Phone number (as shown)")}${f("phoneIntl", "Phone for dialling (+44…)")}${f("whatsapp", "WhatsApp link")}${f("email", "Email")}
     ${f("quote", "“Get Your Free Quote” link")}${f("facebook", "Facebook page")}${f("instagram", "Instagram")}${f("tiktok", "TikTok")}
     <label class="field"><span>Footer text</span><textarea class="inp" data-biz="footerText">${esc(b.footerText || "")}</textarea></label>
+    <div class="grp">SEO and Google</div>
+    <p class="hint">Used for Google, AI search and link previews on Facebook and WhatsApp. Leave a field empty if you don't need it.</p>
+    ${sf("areas", "Areas you cover (separate with commas)")}
+    <label class="field"><span>Opening days</span><select class="inp" data-seok="days">${["", "Mon to Fri", "Mon to Sat", "Every day"].map((d) => `<option value="${d}" ${seo.days === d ? "selected" : ""}>${d || "Not shown"}</option>`).join("")}</select></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label class="field"><span>Opens</span><input class="inp" type="time" data-seok="opens" value="${esc(seo.opens || "")}"></label><label class="field"><span>Closes</span><input class="inp" type="time" data-seok="closes" value="${esc(seo.closes || "")}"></label></div>
+    ${sf("googleProfile", "Google Business Profile link")}
+    <label class="field"><span>Default photo for link previews</span><select class="inp" data-seok="shareImage">${repoImages.filter((n) => /\.(webp|png)$/.test(n) && !/^(favicon|logo|whatsapp)/.test(n)).concat(draft.images.filter((n) => !/\.(mp4|webm)$/.test(n))).map((n) => `<option ${seo.shareImage === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
     <div class="grp">Undo</div><button class="btn sm full danger" id="discardAll">Discard all unpublished changes</button>`;
 }
 
@@ -924,6 +954,7 @@ function bindPanel() {
   if ($("#themeReset")) $("#themeReset").onclick = () => { draft.site.theme = {}; changed({ rerender: true, panel: true }); };
   // settings tab
   p.querySelectorAll("[data-biz]").forEach((i) => (i.onchange = () => { draft.site.business = { ...draft.site.business, [i.dataset.biz]: i.value.trim() }; changed({ rerender: true }); }));
+  p.querySelectorAll("[data-seok]").forEach((i) => (i.onchange = () => { draft.site.seo = { ...(draft.site.seo || {}), [i.dataset.seok]: i.value.trim() }; changed(); }));
   if ($("#discardAll")) $("#discardAll").onclick = discardAll;
 }
 // live theme preview without reloading the page
@@ -943,9 +974,16 @@ async function pageSettings(f) {
     <p class="hint">How this page appears on Google.</p>
     <label class="field"><span>Google title</span><input class="inp" name="title" value="${esc(m.title)}"></label>
     <label class="field"><span>Google description</span><textarea class="inp" name="desc" rows="3">${esc(m.desc)}</textarea></label>
+    <label class="field"><span>Photo for link previews</span><select class="inp" name="ogImage"><option value="">Automatic (first photo on the page)</option>${repoImages.filter((n) => /\.(webp|png)$/.test(n) && !/^(favicon|logo|whatsapp)/.test(n)).concat(draft.images.filter((n) => !/\.(mp4|webm)$/.test(n))).map((n) => `<option ${m.ogImage === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+    <label class="row"><input type="checkbox" name="noindex" ${m.noindex ? "checked" : ""}> Hide this page from Google</label>
     <p class="hint">Changed your mind about this page? <a href="#" id="revertPage" data-f="${f}">Undo all unpublished changes on this page</a>.</p>`,
     [{ label: "Cancel", value: false }, { label: "Save", cls: "primary", collect: true }]);
-  if (r) { draft.pages[f] = { ...m, title: r.title.trim(), desc: r.desc.trim() }; changed(); toast("Page settings saved"); }
+  if (r) {
+    const n = { ...m, title: r.title.trim(), desc: r.desc.trim() };
+    if (r.ogImage) n.ogImage = r.ogImage; else delete n.ogImage;
+    if (r.noindex) n.noindex = true; else delete n.noindex;
+    draft.pages[f] = n; changed(); toast("Page settings saved");
+  }
 }
 document.addEventListener("click", async (e) => {
   if (e.target.id !== "revertPage") return;
@@ -977,6 +1015,7 @@ async function postSettings(f) {
     <p class="hint" style="margin-top:14px">How this post appears on Google.</p>
     <label class="field"><span>Google title</span><input class="inp" name="title" value="${esc(m.title)}"></label>
     <label class="field"><span>Google description</span><textarea class="inp" name="desc" rows="2">${esc(m.desc)}</textarea></label>
+    <label class="row"><input type="checkbox" name="noindex" ${m.noindex ? "checked" : ""}> Hide this post from Google</label>
     <p class="hint"><a href="#" id="delPost">Delete this post</a> &middot; <a href="#" id="revertPage" data-f="${f}">Undo unpublished changes</a></p>`,
     [{ label: "Cancel", value: false }, { label: "Save", cls: "primary", collect: true }]);
   const bg = document.querySelector(".modal-bg:last-of-type");
@@ -993,6 +1032,7 @@ async function postSettings(f) {
   const r = await p;
   if (!r) return;
   draft.pages[f] = { ...m, label: r.label.trim() || m.label, category: r.category, date: r.date || m.date, excerpt: r.excerpt.trim(), img: r.img || m.img, title: r.title.trim(), desc: r.desc.trim() };
+  if (r.noindex) draft.pages[f].noindex = true; else delete draft.pages[f].noindex;
   changed({ rerender: f === file, panel: true }); toast("Post settings saved");
 }
 async function newPost() {
@@ -1130,6 +1170,7 @@ async function publish() {
     if (unsaved) throw new Error("Could not save your changes first");
     await api("publish", { message: "Update website: " + list.map((c) => c.text).join(", ").slice(0, 200) });
     live = clone({ site: draft.site, services: draft.services, pages: draft.pages, html: draft.html });
+    draft.base = baseOf(live);
     repoImages = [...new Set([...repoImages, ...draft.images])];
     toast("Published! The website updates in about a minute.");
   } catch (e) { toast(e.message, true); }
@@ -1141,7 +1182,7 @@ async function discardAll() {
   try {
     await api("discardDraft");
     try { localStorage.removeItem(LS); } catch {}
-    draft = { ...clone(live), images: [] }; unsaved = false;
+    draft = { ...clone(live), images: [], base: baseOf(live) }; unsaved = false;
     if (!draft.pages[file]) file = "index.html";
     renderPanel(); showPage(file); updateStatus();
     toast("Changes discarded");

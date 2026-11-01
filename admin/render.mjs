@@ -40,7 +40,7 @@ export function catServices(state, catId) {
 }
 const catOrder = (state, id) => state.services.categories.findIndex((c) => c.id === id);
 
-function head(state, meta, file) {
+function head(state, meta, file, body = "") {
   return `<!doctype html>
 <html lang="en-GB">
 <head>
@@ -50,7 +50,7 @@ function head(state, meta, file) {
 <meta name="description" content="${meta.desc}">
 <link rel="preload" href="fonts/marcellus-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-${meta.extra || ""}${meta.kind === "post" ? postSchema(state, meta, file) : ""}<style>${state.cssMin}${themeCss(state.site.theme)}</style>
+${seoTags(state, meta, file, body)}${meta.extra || ""}<style>${state.cssMin}${themeCss(state.site.theme)}</style>
 <link rel="icon" href="images/favicon.png">
 <link rel="apple-touch-icon" href="images/favicon.png">
 ${file === "index.html" ? '<script>if(/(invite|recovery|confirmation)_token=/.test(location.hash))location.replace("/admin/"+location.hash)</script>\n' : ""}</head>
@@ -209,7 +209,8 @@ export function renderPage(state, file, opts = {}) {
   const tpl = v ? v.tpl : state.html[file];
   if (!meta || tpl == null) return null;
   const top = meta.header === "lp" ? lpHeader() : header(state);
-  return head(state, meta, file) + top + expandBlocks(state, tpl, file, opts.wrap) + footer(state);
+  const body = expandBlocks(state, tpl, file, opts.wrap);
+  return head(state, meta, file, body) + top + body + footer(state);
 }
 
 export function sitemap(state, base) {
@@ -277,7 +278,78 @@ ${blogCards(state, list)}
 </div></section>`;
 }
 function postSchema(state, m, file) {
-  const base = "https://prestigesignaturecleaning.co.uk";
-  const j = { "@context": "https://schema.org", "@type": "BlogPosting", headline: m.label, description: m.desc, datePublished: m.date, dateModified: m.updated || m.date, image: base + "/" + imgSrc(m.img), mainEntityOfPage: `${base}/${file.replace(/\.html$/, "")}`, author: { "@type": "Organization", name: "Prestige Signature Cleaning Ltd", url: base }, publisher: { "@type": "Organization", name: "Prestige Signature Cleaning Ltd", logo: { "@type": "ImageObject", url: base + "/images/logo.png" } } };
-  return `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>\n`;
+  const base = siteUrl(state);
+  const j = { "@type": "BlogPosting", headline: m.label, description: m.desc, datePublished: m.date, dateModified: m.updated || m.date, image: base + "/" + imgSrc(m.img), mainEntityOfPage: `${base}/${file.replace(/\.html$/, "")}`, author: { "@id": base + "/#business" }, publisher: { "@id": base + "/#business" } };
+  return j;
+}
+
+/* ---------------- SEO: canonical, share tags, schema ---------------- */
+const siteUrl = (state) => ((state.site.seo || {}).siteUrl || "https://prestigesignaturecleaning.co.uk").replace(/\/$/, "");
+export const pageUrl = (state, file) => siteUrl(state) + "/" + (file === "index.html" ? "" : file.replace(/\.html$/, ""));
+const strip = (h) => String(h || "").replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&pound;/g, "£").replace(/&rsquo;|&lsquo;/g, "\u2019").replace(/&ldquo;|&rdquo;/g, "\"").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim();
+function shareImage(state, meta, body) {
+  const seo = state.site.seo || {};
+  let img = meta.ogImage || (meta.kind === "post" && meta.img) || "";
+  if (!img) { const m = body.match(/<img[^>]*class="h4-bg"[^>]*src="images\/([^"]+)"/) || body.match(/<img[^>]*src="images\/([^"]+\.(?:webp|jpe?g|png))"/); if (m) img = m[1]; }
+  img = img || seo.shareImage || "psc-team.webp";
+  return /^https?:/.test(img) ? img : siteUrl(state) + "/images/" + img.replace(/^images\//, "");
+}
+function businessSchema(state) {
+  const b = state.site.business, seo = state.site.seo || {}, base = siteUrl(state);
+  const j = { "@type": "LocalBusiness", "@id": base + "/#business", name: "Prestige Signature Cleaning Ltd", url: base + "/", logo: base + "/images/logo.png", image: base + "/images/" + (seo.shareImage || "psc-team.webp"), description: b.footerText, telephone: b.phoneIntl, email: b.email, priceRange: "££", address: { "@type": "PostalAddress", addressLocality: "London", addressCountry: "GB" } };
+  const areas = String(seo.areas || "").split(",").map((x) => x.trim()).filter(Boolean);
+  if (areas.length) j.areaServed = areas.map((a) => ({ "@type": "Place", name: a }));
+  if (seo.days && seo.opens && seo.closes) {
+    const all = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const n = { "Mon to Fri": 5, "Mon to Sat": 6, "Every day": 7 }[seo.days] || 7;
+    j.openingHoursSpecification = { "@type": "OpeningHoursSpecification", dayOfWeek: all.slice(0, n), opens: seo.opens, closes: seo.closes };
+  }
+  j.sameAs = [b.facebook, b.instagram, b.tiktok, seo.googleProfile].filter(Boolean);
+  return j;
+}
+function crumbs(state, meta, file) {
+  const base = siteUrl(state);
+  const list = [["Home", base + "/"]];
+  if (file === "index.html") return null;
+  if (meta.kind === "service") {
+    const s = state.services.services.find((x) => x.slug + ".html" === file);
+    list.push(["Services", base + "/services"], [s ? s.name : meta.title, pageUrl(state, file)]);
+  } else if (meta.kind === "post" || meta.kind === "blogcat") {
+    list.push(["Blog", base + "/blog"]);
+    const c = state.services.categories.find((x) => x.id === meta.category || blogCatFile(x.id) === file);
+    if (c) list.push([c.name, base + "/" + blogCatFile(c.id).replace(/\.html$/, "")]);
+    if (meta.kind === "post") list.push([meta.label, pageUrl(state, file)]);
+  } else list.push([meta.label || meta.title.split("|")[0].trim(), pageUrl(state, file)]);
+  return { "@type": "BreadcrumbList", itemListElement: list.map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })) };
+}
+function faqSchema(body) {
+  const qs = [];
+  const re = /<details[^>]*>\s*<summary[^>]*>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/g;
+  let m;
+  while ((m = re.exec(body))) { const q = strip(m[1]), a = strip(m[2]); if (q && a) qs.push({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } }); }
+  return qs.length ? { "@type": "FAQPage", mainEntity: qs } : null;
+}
+function seoTags(state, meta, file, body) {
+  const url = pageUrl(state, file), img = shareImage(state, meta, body), base = siteUrl(state);
+  const graph = [businessSchema(state)];
+  if (file === "index.html") graph.push({ "@type": "WebSite", "@id": base + "/#website", url: base + "/", name: "Prestige Signature Cleaning", publisher: { "@id": base + "/#business" } });
+  if (meta.kind === "service") {
+    const s = state.services.services.find((x) => x.slug + ".html" === file);
+    if (s) graph.push({ "@type": "Service", name: s.name, serviceType: s.name, description: meta.desc, url, image: img, provider: { "@id": base + "/#business" }, areaServed: (businessSchema(state).areaServed || []) });
+  }
+  if (meta.kind === "post") graph.push(postSchema(state, meta, file));
+  const bc = crumbs(state, meta, file); if (bc) graph.push(bc);
+  const faq = faqSchema(body); if (faq) graph.push(faq);
+  const t = escA(meta.title), d = escA(meta.desc);
+  return `<link rel="canonical" href="${url}">
+${meta.noindex ? '<meta name="robots" content="noindex, follow">\n' : ""}<meta property="og:type" content="${meta.kind === "post" ? "article" : "website"}">
+<meta property="og:site_name" content="Prestige Signature Cleaning">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${d}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${img}">
+<meta name="twitter:card" content="summary_large_image">
+${meta.kind === "post" && meta.date ? `<meta property="article:published_time" content="${meta.date}">\n` : ""}<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>
+`;
 }

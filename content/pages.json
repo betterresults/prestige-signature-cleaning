@@ -52,7 +52,8 @@
   "extra": "<link rel=\"preload\" as=\"image\" href=\"images/hero-poster.webp\" fetchpriority=\"high\">\n",
   "header": "lp",
   "kind": "page",
-  "label": "Quote landing page"
+  "label": "Quote landing page",
+  "noindex": true
  },
  "privacy-policy.html": {
   "title": "Privacy policy | Prestige Signature Cleaning",

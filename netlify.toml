@@ -33,3 +33,16 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
     Cache-Control = "no-store"
+
+# old landing page address goes to the quote page
+[[redirects]]
+  from = "https://quote.prestigesignaturecleaning.co.uk/*"
+  to = "https://prestigesignaturecleaning.co.uk/quote"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://quote.prestigesignaturecleaning.co.uk/*"
+  to = "https://prestigesignaturecleaning.co.uk/quote"
+  status = 301
+  force = true

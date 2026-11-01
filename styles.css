@@ -878,3 +878,12 @@ video.h4-bg{animation:none;transform:none;object-fit:cover}
 .ps-banner-copy p{color:#E3ECE5}
 @media (max-width:1020px){.ps-split{grid-template-columns:1fr;gap:36px}.ps-gallery,.ps-reviews{grid-template-columns:1fr 1fr}.ps-stats{grid-template-columns:1fr 1fr}}
 @media (max-width:620px){.ps-gallery,.ps-reviews,.ps-ba{grid-template-columns:1fr}.ps-banner-copy{padding:28px}.ps-banner{min-height:360px}.ps-stats strong{font-size:2rem}}
+/* google reviews */
+.g-rev{margin-top:28px}
+.g-rev-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.g-rev-head p{margin:0;font-weight:600;color:var(--green-900)}
+.g-rev-head .stars{display:inline;margin:0 4px;letter-spacing:2px}
+.g-logo{width:30px;height:30px;flex:none}
+.g-rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g-rev .rq figcaption span{display:block;font-weight:400;font-size:.85rem}
+@media (max-width:1020px){.g-rev-grid{grid-template-columns:1fr}}

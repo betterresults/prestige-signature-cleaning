@@ -94,7 +94,7 @@ export const SECTIONS = [
 <div class="ps-stats">
 <div><strong>20+</strong><span>years of experience</span></div>
 <div><strong>100%</strong><span>DBS checked team</span></div>
-<div><strong>5&#9733;</strong><span>recommended on Facebook</span></div>
+<div><strong>5.0</strong><span>rated on Google</span></div>
 <div><strong>7</strong><span>days a week</span></div>
 </div>
 </div></section>`
@@ -115,11 +115,11 @@ export const SECTIONS = [
     id: "reviews", name: "Reviews", desc: "Three client reviews with stars.",
     thumb: "reviews",
     html: `<section class="h4-sec h4-paper ps-sec"><div class="wrap">
-<div class="h4-head"><div><h2>What our clients say</h2><p>Real recommendations from our clients.</p></div></div>
+<div class="h4-head"><div><h2>What our clients say</h2><p>Real recommendations from our clients on Google and Facebook.</p></div></div>
 <div class="ps-reviews">
-<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;Excellent service and attention to detail. Everything was cleaned to a very high standard.&rdquo;</blockquote><figcaption>Residential client</figcaption></figure>
-<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;Consistent quality, great communication and a professional team.&rdquo;</blockquote><figcaption>Office client</figcaption></figure>
-<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;Arrived on time, took notes of everything needed and went above and beyond.&rdquo;</blockquote><figcaption>Residential client</figcaption></figure>
+<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;I&rsquo;d like to express my sincere appreciation to Prestige Signature Cleaning Company. The staff member they sent did an excellent job and was very professional. The place was left spotless and sparkling after a really thorough deep clean. I&rsquo;m so pleased with the service and would happily recommend them. Thank you so much!&rdquo;</blockquote><figcaption>Nebras Clinic <span>Google review</span></figcaption></figure>
+<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;Great price. Amazing services. Very professional team. Accommodating your needs. Pleasure to deal with.&rdquo;</blockquote><figcaption>Khalil Ahmed, owner of a cosmetic day surgery hospital in London <span>Google review</span></figcaption></figure>
+<figure class="rq"><div class="stars" aria-label="5 stars">${STARS}</div><blockquote>&ldquo;I was in need of a cleaner. I have clinics and hospital. They sent me a real top class professional, very kind, amazing and immediately adapted to our needs and provided top range quality. Really happy.&rdquo;</blockquote><figcaption>Director, Private Healthcare Clinics <span>Facebook review</span></figcaption></figure>
 </div>
 </div></section>`
   },

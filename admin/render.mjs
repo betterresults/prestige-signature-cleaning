@@ -50,7 +50,7 @@ function head(state, meta, file) {
 <meta name="description" content="${meta.desc}">
 <link rel="preload" href="fonts/marcellus-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-${meta.extra || ""}<style>${state.cssMin}${themeCss(state.site.theme)}</style>
+${meta.extra || ""}${meta.kind === "post" ? postSchema(state, meta, file) : ""}<style>${state.cssMin}${themeCss(state.site.theme)}</style>
 <link rel="icon" href="images/favicon.png">
 <link rel="apple-touch-icon" href="images/favicon.png">
 ${file === "index.html" ? '<script>if(/(invite|recovery|confirmation)_token=/.test(location.hash))location.replace("/admin/"+location.hash)</script>\n' : ""}</head>
@@ -83,11 +83,12 @@ function header(state) {
 <details><summary>Services</summary><div class="mega">${mega}<a class="mega-all" href="services.html">View all services</a></div></details>
 <a href="about.html">About us</a>
 <a href="areas-we-cover.html">Areas we cover</a>
+<a href="blog.html">Blog</a>
 <a href="contact.html">Contact</a>
 </nav>
 <a class="btn btn-gold header-cta" href="${b.quote}">Get Your Free Quote</a>
 <details class="menu-toggle"><summary>Menu</summary><div class="panel">
-<a href="index.html">Home</a><a href="services.html">All services</a>${mobile}<a href="about.html">About us</a><a href="areas-we-cover.html">Areas we cover</a><a href="contact.html">Contact</a>
+<a href="index.html">Home</a><a href="services.html">All services</a>${mobile}<a href="about.html">About us</a><a href="areas-we-cover.html">Areas we cover</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a>
 <a class="btn btn-gold" href="${b.quote}">Get Your Free Quote</a>
 </div></details>
 </div></header>
@@ -116,7 +117,7 @@ function footer(state) {
 ${socialIcons(b)}
 </div>
 <div><p class="fh">Services</p>${svc}</div>
-<div><p class="fh">Company</p><a href="about.html">About us</a><a href="services.html">All services</a><a href="areas-we-cover.html">Areas we cover</a><a href="index.html#reviews">Reviews</a><a href="contact.html">Contact</a>${fbLink(b, "Facebook", "")}<a href="${b.instagram}" target="_blank" rel="noopener">Instagram</a><a href="${b.tiktok}" target="_blank" rel="noopener">TikTok</a></div>
+<div><p class="fh">Company</p><a href="about.html">About us</a><a href="services.html">All services</a><a href="areas-we-cover.html">Areas we cover</a><a href="index.html#reviews">Reviews</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a>${fbLink(b, "Facebook", "")}<a href="${b.instagram}" target="_blank" rel="noopener">Instagram</a><a href="${b.tiktok}" target="_blank" rel="noopener">TikTok</a></div>
 <div><p class="fh">Get in touch</p><a href="tel:${b.phoneIntl}">${b.phone}</a><a href="${b.whatsapp}">WhatsApp</a><a href="mailto:${b.email}">Email us</a><a class="btn btn-gold" style="display:inline-block;margin-top:14px;color:#fff;padding:12px 22px" href="${b.quote}">Get Your Free Quote</a></div>
 </div>
 <div class="footer-base">
@@ -181,6 +182,11 @@ export function renderBlock(state, name, file) {
     case "related": return related(state, file.replace(/\.html$/, ""));
     case "catsections": return catSections(state);
     case "jump": return state.services.categories.filter((c) => catServices(state, c.id).length).map((c) => `<a href="#${c.id}">${c.title || c.name}</a>`).join("");
+    case "blog": return blogCards(state, posts(state, arg || "all"));
+    case "blogcats": return blogCats(state, arg || "all");
+    case "bloghero": return blogCatHero(state, arg);
+    case "posthead": return postHead(state, file);
+    case "postmore": return postMore(state, file);
     case "dilvon": {
       const t = state.site.embedTemplate || "";
       return arg === "contact-us" ? t : t.split("booking-form-contact-us").join(`booking-form-${arg}`).split("/contact-us?").join(`/${arg}?`);
@@ -198,14 +204,80 @@ export function expandBlocks(state, tpl, file, wrap) {
 
 // opts.wrap: keep block markers (editor). Returns full page html.
 export function renderPage(state, file, opts = {}) {
-  const meta = state.pages[file];
-  const tpl = state.html[file];
+  const v = !state.pages[file] && blogCatVirtual(state, file);
+  const meta = v ? v.meta : state.pages[file];
+  const tpl = v ? v.tpl : state.html[file];
   if (!meta || tpl == null) return null;
   const top = meta.header === "lp" ? lpHeader() : header(state);
   return head(state, meta, file) + top + expandBlocks(state, tpl, file, opts.wrap) + footer(state);
 }
 
 export function sitemap(state, base) {
-  const urls = Object.keys(state.pages).filter((f) => !state.pages[f].noindex).map((f) => `<url><loc>${base}/${f === "index.html" ? "" : f.replace(/\.html$/, "")}</loc></url>`);
+  const urls = Object.keys(state.pages).filter((f) => !state.pages[f].noindex).concat(blogCatFiles(state)).map((f) => `<url><loc>${base}/${f === "index.html" ? "" : f.replace(/\.html$/, "")}</loc></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+}
+
+/* ---------------- blog ---------------- */
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+export const fmtDate = (d) => { const [y, m, day] = String(d || "").split("-").map(Number); return y ? `${day} ${MONTHS[m - 1]} ${y}` : ""; };
+const escT = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escA = (t) => String(t || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+export function posts(state, cat = "all") {
+  return Object.keys(state.pages).filter((f) => state.pages[f].kind === "post" && (cat === "all" || state.pages[f].category === cat))
+    .map((f) => ({ file: f, ...state.pages[f] })).sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.file.localeCompare(b.file));
+}
+export const blogCatFile = (id) => `blog-${id}.html`;
+export function blogCatFiles(state) { return state.services.categories.filter((c) => posts(state, c.id).length).map((c) => blogCatFile(c.id)); }
+function blogCatVirtual(state, file) {
+  const c = state.services.categories.find((x) => blogCatFile(x.id) === file);
+  if (!c || !state.pages["blog.html"]) return null;
+  return { meta: { title: `${c.name} Tips and Advice | Prestige Signature Cleaning Blog`, desc: `Practical ${c.name.toLowerCase()} tips and advice from the Prestige Signature Cleaning team in London and Essex.`, kind: "blogcat" }, tpl: `<!--@bloghero:${c.id}-->\n\n<section class="h4-sec blog-sec"><div class="wrap"><!--@blog:${c.id}--></div></section>\n` };
+}
+export function readMins(html) { const words = String(html || "").replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length; return Math.max(1, Math.round(words / 220)); }
+const imgSrc = (i) => (i ? (/^(https?:|\/)/.test(i) ? i : "images/" + i) : "images/psc-team.webp");
+const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const catName = (state, id) => (state.services.categories.find((c) => c.id === id) || {}).name || "Blog";
+function blogCards(state, list) {
+  if (!list.length) return '<p class="blog-empty">New articles are on the way.</p>';
+  return `<div class="blog-grid">${list.map((p) => `<a class="rel-card blog-card" href="${p.file}"><span class="rel-img"><img src="${imgSrc(p.img)}" alt="${escA(p.label)}" loading="lazy" width="600" height="400"></span><span class="rel-body"><span class="rel-tag">${catName(state, p.category)}</span><strong>${escT(p.label)}</strong><span class="rel-line">${escT(p.excerpt)}</span><span class="blog-meta">${fmtDate(p.date)} &middot; ${readMins(state.html[p.file])} min read</span><span class="rel-more">Read the article ${ARROW}</span></span></a>`).join("")}</div>`;
+}
+function blogCats(state, cur) {
+  const cats = state.services.categories.filter((c) => posts(state, c.id).length);
+  return `<nav class="blog-cats" aria-label="Blog categories"><a href="blog.html"${cur === "all" ? ' class="on" aria-current="page"' : ""}>All articles</a>${cats.map((c) => `<a href="${blogCatFile(c.id)}"${cur === c.id ? ' class="on" aria-current="page"' : ""}>${c.name}</a>`).join("")}</nav>`;
+}
+function blogCatHero(state, id) {
+  const c = state.services.categories.find((x) => x.id === id) || { name: "Blog" };
+  return `<section class="page-hero blog-hero"><div class="wrap">
+<p class="crumbs"><a href="index.html">Home</a> / <a href="blog.html">Blog</a> / ${c.name}</p>
+<h1>${c.name} tips and advice</h1>
+<p>Practical advice from our team to help you keep your ${id === "commercial-cleaning" ? "workplace" : "home"} clean, fresh and looked after.</p>
+${blogCats(state, id)}
+</div></section>`;
+}
+function postHead(state, file) {
+  const m = state.pages[file] || {};
+  const cat = state.services.categories.find((c) => c.id === m.category);
+  return `<section class="post-hero"><div class="wrap post-wrap">
+<p class="crumbs"><a href="index.html">Home</a> / <a href="blog.html">Blog</a>${cat ? ` / <a href="${blogCatFile(cat.id)}">${cat.name}</a>` : ""}</p>
+${cat ? `<a class="rel-tag" href="${blogCatFile(cat.id)}">${cat.name}</a>` : ""}
+<h1>${escT(m.label)}</h1>
+<p class="post-meta">By the Prestige Signature Cleaning team &middot; ${fmtDate(m.date)} &middot; ${readMins(state.html[file])} min read</p>
+</div>
+<div class="wrap post-cover"><img src="${imgSrc(m.img)}" alt="${escA(m.label)}" width="1200" height="675"></div>
+</section>`;
+}
+function postMore(state, file) {
+  const m = state.pages[file] || {};
+  const all = posts(state).filter((p) => p.file !== file);
+  const list = all.filter((p) => p.category === m.category).concat(all.filter((p) => p.category !== m.category)).slice(0, 3);
+  if (!list.length) return "";
+  return `<section class="h4-sec h4-paper"><div class="wrap">
+<div class="h4-head"><div><h2>More from our blog</h2><p>More cleaning tips and advice from our team.</p></div><a class="btn btn-line" href="blog.html">See all articles</a></div>
+${blogCards(state, list)}
+</div></section>`;
+}
+function postSchema(state, m, file) {
+  const base = "https://prestigesignaturecleaning.co.uk";
+  const j = { "@context": "https://schema.org", "@type": "BlogPosting", headline: m.label, description: m.desc, datePublished: m.date, dateModified: m.updated || m.date, image: base + "/" + imgSrc(m.img), mainEntityOfPage: `${base}/${file.replace(/\.html$/, "")}`, author: { "@type": "Organization", name: "Prestige Signature Cleaning Ltd", url: base }, publisher: { "@type": "Organization", name: "Prestige Signature Cleaning Ltd", logo: { "@type": "ImageObject", url: base + "/images/logo.png" } } };
+  return `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>\n`;
 }

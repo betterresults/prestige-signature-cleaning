@@ -1,4 +1,4 @@
-import { renderPage, minifyCss, THEME_VARS, catServices } from "./render.mjs";
+import { renderPage, minifyCss, THEME_VARS, catServices, posts, blogCatFile } from "./render.mjs";
 import { SECTIONS, THUMBS } from "./sections.mjs";
 
 const API = "/api/admin";
@@ -199,7 +199,7 @@ function changeList() {
 }
 function pageLabel(f, src = draft) {
   const m = src.pages[f];
-  if (!m) return f;
+  if (!m) { const c = src.services.categories.find((x) => blogCatFile(x.id) === f); return c ? `Blog: ${c.name}` : f; }
   if (m.label) return m.label;
   const s = src.services.services.find((x) => x.slug + ".html" === f);
   return s ? s.name : f.replace(/\.html$/, "").replace(/-/g, " ");
@@ -293,8 +293,9 @@ function internalTarget(a) {
   const h = a.getAttribute("href") || "";
   if (/^(https?:|mailto:|tel:|#)/.test(h)) return null;
   const f = h.split("#")[0] || "index.html";
-  return draft.pages[f] ? f : null;
+  return draft.pages[f] || blogCat(f) ? f : null;
 }
+const blogCat = (f) => draft.services.categories.find((c) => blogCatFile(c.id) === f);
 function attachPreview(doc) {
   doc.addEventListener("click", (e) => {
     const a = e.target.closest("a");
@@ -315,7 +316,12 @@ const BLOCK_HELP = {
   catsections: "These sections list your categories and services automatically. Change them in the Services tab.",
   jump: "These links follow your categories automatically.",
   map: "The London map is fixed.",
-  dilvon: "This is the Dilvon form. Change the form itself in Dilvon."
+  dilvon: "This is the Dilvon form. Change the form itself in Dilvon.",
+  blog: "Blog posts appear here automatically, newest first. Add posts in Pages, under Blog posts.",
+  blogcats: "These category buttons follow your service categories automatically.",
+  bloghero: "Category pages are made automatically for every category that has posts.",
+  posthead: "Click to change the post title, category, date, summary and cover photo.",
+  postmore: "More posts are picked automatically, from the same category first."
 };
 const EDIT_CSS = `
 .pse-hover{outline:2px dashed rgba(176,141,87,.9)!important;outline-offset:2px;cursor:text}
@@ -389,7 +395,7 @@ function attachEditor(doc) {
       if (t.closest("header,footer")) toast("The menu and footer update automatically from Services and Settings.");
       deselect(); return;
     }
-    if (t.closest("[data-pse-block]")) { e.preventDefault(); deselect(); return; }
+    if (t.closest("[data-pse-block]")) { e.preventDefault(); deselect(); if (t.closest("[data-pse-block]").dataset.pseBlock === "posthead") postSettings(file); return; }
     const tabBtn = t.closest('[role="tab"]');
     if (tabBtn) switchTab(tabBtn);
     const vid = t.closest(".ps-video");
@@ -859,8 +865,9 @@ function pagesPanel() {
   }
   const orphan = Object.keys(m).filter((f) => m[f].kind === "service" && !draft.services.services.some((s) => s.slug + ".html" === f && draft.services.categories.some((c) => c.id === s.category)));
   if (orphan.length) html += group("other", "Other", orphan);
+  html += group("blog", "Blog posts", posts(rstate()).map((x) => x.file));
   html += group("legal", "Legal pages", legal);
-  html += `<div style="margin-top:16px"><button class="btn sm full" id="newSvcBtn">+ New service page</button></div>`;
+  html += `<div style="margin-top:16px;display:grid;gap:8px"><button class="btn sm full" id="newPostBtn">+ New blog post</button><button class="btn sm full" id="newSvcBtn">+ New service page</button></div>`;
   return html;
 }
 function servicesPanel() {
@@ -898,6 +905,7 @@ function bindPanel() {
   p.querySelectorAll("details.pgrp").forEach((d) => d.addEventListener("toggle", () => { if (d.open) openGroups.add(d.dataset.g); else openGroups.delete(d.dataset.g); }));
   p.querySelectorAll("[data-seo]").forEach((b) => (b.onclick = () => pageSettings(b.dataset.seo)));
   if ($("#newSvcBtn")) $("#newSvcBtn").onclick = () => newService();
+  if ($("#newPostBtn")) $("#newPostBtn").onclick = () => newPost();
   // services tab
   p.querySelectorAll("[data-snew]").forEach((b) => (b.onclick = () => newService(b.dataset.snew)));
   p.querySelectorAll("[data-sedit]").forEach((b) => (b.onclick = () => editService(b.dataset.sedit)));
@@ -929,6 +937,8 @@ function applyTheme() {
 /* ---------------- pages / services / categories ---------------- */
 async function pageSettings(f) {
   const m = draft.pages[f];
+  if (!m) return toast("This page is made automatically from your blog posts.");
+  if (m.kind === "post") return postSettings(f);
   const r = await modal(`Page settings: ${esc(pageLabel(f))}`, `
     <p class="hint">How this page appears on Google.</p>
     <label class="field"><span>Google title</span><input class="inp" name="title" value="${esc(m.title)}"></label>
@@ -947,6 +957,66 @@ document.addEventListener("click", async (e) => {
   changed({ rerender: f === file }); toast("This page is back to the published version");
 });
 
+/* ---------------- blog posts ---------------- */
+const today = () => new Date().toISOString().slice(0, 10);
+const imgUrl = (n) => (draft.images.includes(n) ? "/api/draft-image/" : "/images/") + n;
+async function postSettings(f) {
+  const m = draft.pages[f];
+  const cats = draft.services.categories;
+  const imgs = [...draft.images.filter((n) => !/\.(mp4|webm)$/.test(n)), ...repoImages.filter((n) => !/^(favicon|logo|whatsapp)/.test(n) && !/\.jpe?g$/.test(n))];
+  const p = modal(`Post settings`, `
+    <label class="field"><span>Post title</span><input class="inp" name="label" value="${esc(m.label)}"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <label class="field"><span>Category</span><select class="inp" name="category">${cats.map((c) => `<option value="${c.id}" ${c.id === m.category ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+      <label class="field"><span>Date</span><input class="inp" type="date" name="date" value="${esc(m.date || today())}"></label>
+    </div>
+    <label class="field"><span>Short summary for the blog cards</span><textarea class="inp" name="excerpt" rows="2">${esc(m.excerpt)}</textarea></label>
+    <div class="field"><span>Cover photo</span><input type="hidden" name="img" value="${esc(m.img)}">
+      <div style="display:flex;align-items:center;gap:12px;margin:6px 0"><img id="pcPrev" src="${esc(imgUrl(m.img))}" alt="" style="width:120px;aspect-ratio:3/2;object-fit:cover;border-radius:8px"><button class="btn sm" id="pcUp" type="button">⬆ Upload new photo</button></div>
+      <div class="lib" id="pcLib" style="max-height:170px;grid-template-columns:repeat(6,1fr)">${imgs.map((n) => `<img src="${imgUrl(n)}" data-n="${esc(n)}" loading="lazy" title="${esc(n)}">`).join("")}</div></div>
+    <p class="hint" style="margin-top:14px">How this post appears on Google.</p>
+    <label class="field"><span>Google title</span><input class="inp" name="title" value="${esc(m.title)}"></label>
+    <label class="field"><span>Google description</span><textarea class="inp" name="desc" rows="2">${esc(m.desc)}</textarea></label>
+    <p class="hint"><a href="#" id="delPost">Delete this post</a> &middot; <a href="#" id="revertPage" data-f="${f}">Undo unpublished changes</a></p>`,
+    [{ label: "Cancel", value: false }, { label: "Save", cls: "primary", collect: true }]);
+  const bg = document.querySelector(".modal-bg:last-of-type");
+  const setImg = (n) => { bg.querySelector('[name="img"]').value = n; bg.querySelector("#pcPrev").src = imgUrl(n); };
+  bg.querySelector("#pcLib").onclick = (e) => { const t = e.target.closest("img[data-n]"); if (t) setImg(t.dataset.n); };
+  bg.querySelector("#pcUp").onclick = () => pickImage((n) => setImg(n));
+  bg.querySelector(".modal").style.width = "min(620px,96vw)";
+  bg.querySelector("#delPost").onclick = async (e) => {
+    e.preventDefault(); bg.remove();
+    if (!(await confirmBox("Delete this post?", "It will be removed from the blog when you publish.", "Delete", "danger"))) return;
+    delete draft.pages[f]; delete draft.html[f];
+    changed({ panel: true }); showPage("blog.html"); toast("Post deleted");
+  };
+  const r = await p;
+  if (!r) return;
+  draft.pages[f] = { ...m, label: r.label.trim() || m.label, category: r.category, date: r.date || m.date, excerpt: r.excerpt.trim(), img: r.img || m.img, title: r.title.trim(), desc: r.desc.trim() };
+  changed({ rerender: f === file, panel: true }); toast("Post settings saved");
+}
+async function newPost() {
+  const cats = draft.services.categories;
+  if (!cats.length) return toast("Create a category first", true);
+  const r = await modal("New blog post", `
+    <label class="field"><span>Post title</span><input class="inp" name="label" placeholder="e.g. How often should you deep clean your oven?"></label>
+    <label class="field"><span>Category</span><select class="inp" name="cat">${cats.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></label>
+    <p class="hint">The post opens straight away so you can write it on the page. Add the cover photo and summary in Post settings.</p>`,
+    [{ label: "Cancel", value: false }, { label: "Create post", cls: "primary", collect: true }]);
+  if (!r || !r.label.trim()) return;
+  const label = r.label.trim();
+  let slug = slugify(label).slice(0, 70).replace(/-$/, ""), k = 2;
+  while (draft.pages[slug + ".html"] || blogCat(slug + ".html") || slug === "blog") slug = slugify(label).slice(0, 66) + "-" + k++;
+  const svc = draft.services.services.find((s) => s.category === r.cat);
+  const f = slug + ".html";
+  draft.pages[f] = { title: `${label} | Prestige Signature Cleaning`, desc: "", header: "main", kind: "post", label, category: r.cat, date: today(), img: svc ? svc.img : "psc-team.webp", excerpt: "" };
+  draft.html[f] = `\n<!--@posthead-->\n\n<section class="post-body"><div class="wrap">\n<p class="lead">Write a short introduction to your post here.</p>\n<h2>First heading</h2>\n<p>Write your first paragraph here. Click any text to change it, and use Duplicate in the right panel to add more paragraphs or headings.</p>\n</div></section>\n\n<section class="post-sec-cta"><div class="wrap">\n<div class="h4-final">\n<div><h2>Need a hand with your cleaning?</h2><p>Tell us what you need and get a clear price, with no obligation.</p></div>\n<a class="btn btn-gold btn-lg" href="${esc(draft.site.business.quote)}">Get Your Free Quote</a>\n</div>\n</div></section>\n\n<!--@postmore-->\n`;
+  openGroups.add("blog");
+  changed({ panel: true });
+  tab = "pages"; document.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x.dataset.tab === "pages")); renderPanel();
+  showPage(f);
+  toast("New post created. Click the text to write it, then add a cover photo and summary in Post settings.");
+}
 const slugify = (s) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 function iconOptions(cur) {
   const icons = draft.services.icons || {};

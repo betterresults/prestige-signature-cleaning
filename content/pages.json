@@ -39,6 +39,13 @@
   "kind": "page",
   "label": "Contact"
  },
+ "blog.html": {
+  "title": "Cleaning Tips and Advice | Prestige Signature Cleaning Blog",
+  "desc": "Practical cleaning tips and advice for homes, offices and clinics from the Prestige Signature Cleaning team in London and Essex.",
+  "header": "main",
+  "kind": "page",
+  "label": "Blog"
+ },
  "quote.html": {
   "title": "Get a Free Cleaning Quote | Prestige Signature Cleaning",
   "desc": "Free cleaning quotes for homes, offices and clinics across London, Romford, Havering, Brentwood and nearby Essex. Regular cleaning from &pound;66. DBS checked, fully insured.",
@@ -141,5 +148,38 @@
   "extra": "<link rel=\"preload\" as=\"image\" href=\"images/svc-post-construction-cleaning.webp\" fetchpriority=\"high\">\n",
   "header": "main",
   "kind": "service"
+ },
+ "regular-vs-deep-cleaning.html": {
+  "title": "Regular Cleaning or Deep Cleaning: Which Does Your Home Need? | Prestige Signature Cleaning",
+  "desc": "The difference between a regular clean and a deep clean, five signs your home needs a deep clean first, and what each one costs in London and Essex.",
+  "header": "main",
+  "kind": "post",
+  "label": "Regular cleaning or deep cleaning: which does your home need?",
+  "category": "home-cleaning",
+  "date": "2026-11-01",
+  "img": "svc-deep-cleaning.webp",
+  "excerpt": "How the two cleans differ, five signs you need a deep clean first, and what each one costs."
+ },
+ "end-of-tenancy-cleaning-checklist.html": {
+  "title": "End of Tenancy Cleaning Checklist: Room by Room | Prestige Signature Cleaning",
+  "desc": "A room by room end of tenancy cleaning checklist, the places people forget, and how to give yourself the best chance of getting your deposit back.",
+  "header": "main",
+  "kind": "post",
+  "label": "End of tenancy cleaning checklist: room by room",
+  "category": "home-cleaning",
+  "date": "2026-11-01",
+  "img": "svc-end-of-tenancy-cleaning.webp",
+  "excerpt": "What the letting agent will check, room by room, and the places most people forget before handing back the keys."
+ },
+ "choosing-an-office-cleaning-company.html": {
+  "title": "How to Choose an Office Cleaning Company: 7 Questions to Ask | Prestige Signature Cleaning",
+  "desc": "Seven questions to ask before you hire an office cleaning company in London or Essex, from walkthroughs and specifications to vetting and quality checks.",
+  "header": "main",
+  "kind": "post",
+  "label": "How to choose an office cleaning company: 7 questions to ask",
+  "category": "commercial-cleaning",
+  "date": "2026-11-01",
+  "img": "svc-office-cleaning.webp",
+  "excerpt": "Seven simple questions that help you find an office cleaning company you won't have to chase."
  }
 }

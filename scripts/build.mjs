@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, cpSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderPage, minifyCss, sitemap } from "../admin/render.mjs";
+import { renderPage, minifyCss, sitemap, blogCatFiles } from "../admin/render.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
@@ -22,7 +22,7 @@ for (const p of ["images", "fonts", "video", "admin", "styles.css", "london-map.
   if (existsSync(join(root, p))) cpSync(join(root, p), join(out, p), { recursive: true });
 }
 let n = 0;
-for (const file of Object.keys(state.pages)) {
+for (const file of [...Object.keys(state.pages), ...blogCatFiles(state)]) {
   const html = renderPage(state, file);
   if (html == null) { console.warn("skipped", file); continue; }
   writeFileSync(join(out, file), html);

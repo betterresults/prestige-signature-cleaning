@@ -609,6 +609,16 @@ function itemOf(el) {
 }
 
 /* ---------------- inspector ---------------- */
+// The words on a link or button (keeps any icon inside it)
+function textNodesOf(el) { const w = el.ownerDocument.createTreeWalker(el, 4); const out = []; let n; while ((n = w.nextNode())) if (n.nodeValue.trim()) out.push(n); return out; }
+function linkText(el) { return textNodesOf(el).map((n) => n.nodeValue.trim()).join(" "); }
+function setLinkText(el, v) {
+  const ns = textNodesOf(el);
+  if (!ns.length) { el.appendChild(el.ownerDocument.createTextNode(v)); return; }
+  const lead = ns[0].nodeValue.match(/^\s*/)[0], trail = ns[0].nodeValue.match(/\s*$/)[0];
+  ns[0].nodeValue = lead + v + trail;
+  ns.slice(1).forEach((n) => { n.nodeValue = ""; });
+}
 function rgbToHex(c) {
   c = String(c).trim();
   if (/^#[0-9a-f]{6}$/i.test(c)) return c.toLowerCase();
@@ -643,6 +653,7 @@ function renderInspector() {
         ${colorField("Text colour", rgbToHex(cs.color), "tCol", "tColReset")}
       </div>
       ${isLink ? `<div class="sec"><h5>Link</h5>
+        <label class="field"><span>Button text</span><input class="inp" id="lText" value="${esc(linkText(el))}"></label>
         <label class="field"><span>Goes to</span><input class="inp" id="lHref" value="${esc(el.getAttribute("href") || "")}"></label>
         <label class="field"><span>Or pick a page</span><select class="inp" id="lPage"><option value="">Choose a page…</option>${Object.keys(draft.pages).map((f) => `<option value="${f}">${esc(pageLabel(f))}</option>`).join("")}</select></label>
         <label class="row"><input type="checkbox" id="lNew" ${el.getAttribute("target") === "_blank" ? "checked" : ""}> Open in a new tab</label>
@@ -701,6 +712,7 @@ function renderInspector() {
     bindColor("tCol", (v) => { el.style.color = v; syncPage(); });
     $("#tColReset").onclick = () => { el.style.removeProperty("color"); if (!el.getAttribute("style")) el.removeAttribute("style"); syncPage(); renderInspector(); };
     if (el.tagName === "A") {
+      $("#lText").oninput = () => { setLinkText(el, $("#lText").value); syncPage(); };
       $("#lHref").onchange = () => { el.setAttribute("href", $("#lHref").value.trim()); syncPage(); };
       $("#lPage").onchange = () => { if ($("#lPage").value) { $("#lHref").value = $("#lPage").value; el.setAttribute("href", $("#lPage").value); syncPage(); } };
       $("#lNew").onchange = () => { if ($("#lNew").checked) { el.setAttribute("target", "_blank"); el.setAttribute("rel", "noopener"); } else { el.removeAttribute("target"); el.removeAttribute("rel"); } syncPage(); };

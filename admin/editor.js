@@ -11,6 +11,7 @@ const LS = "psc_editor_backup";
 const ID = "/.netlify/identity";
 let auth = JSON.parse(localStorage.getItem("psc_auth") || "null"); // { access, refresh, exp, email } or { legacy }
 let live = null;        // published content
+let pubs = null;        // { used, left, limit } publishes this month
 let draft = null;       // working copy { site, services, pages, html, images }
 let cssMin = "";
 let repoImages = [];
@@ -146,6 +147,7 @@ async function start() {
     live = { site: j.content.site, services: j.content.services, pages: j.content.pages, html: j.content.html };
     cssMin = minifyCss(j.content.css);
     repoImages = j.images.map((i) => i.name);
+    pubs = j.publishes || null;
     let d = j.draft;
     // a local backup that never reached the server wins if it is newer
     try {
@@ -231,6 +233,7 @@ function updateStatus() {
   $("#publishBtn").disabled = n === 0 && !unsaved;
   const st = $("#status");
   st.className = "status" + (saving ? " saving" : unsaved ? " unsaved" : "");
+  if (pubs) $("#publishBtn").title = `${pubs.left} of ${pubs.limit} publishes left this month`;
   $("#statusText").textContent = saving ? "Saving…" : unsaved ? "Unsaved changes" : n ? "Saved · not published yet" : "Everything is published";
   document.querySelectorAll(".plist li[data-f]").forEach((li) => {
     const c = changeList().some((x) => x.f === li.dataset.f);
@@ -1161,18 +1164,20 @@ async function publish() {
   if (sel && sel.kind === "text") syncText();
   const list = changeList();
   if (!list.length && !unsaved) return toast("Everything is already published");
-  const ok = await modal("Publish your changes?", `<p>These changes will go live on <b>prestigesignaturecleaning.co.uk</b>:</p><ul>${list.map((c) => `<li>${esc(c.text)}</li>`).join("")}</ul><p class="hint">The website updates about a minute after publishing.</p>`, [{ label: "Not yet", value: false }, { label: "Publish", cls: "gold" }]);
+  if (pubs && pubs.left <= 0) return modal("No publishes left this month", `<p>You have used all ${pubs.limit} publishes for this month. Your changes are saved here, and you can publish them at the start of next month.</p>`, [{ label: "OK" }]);
+  const ok = await modal("Publish your changes?", `<p>These changes will go live on <b>prestigesignaturecleaning.co.uk</b>:</p><ul>${list.map((c) => `<li>${esc(c.text)}</li>`).join("")}</ul><p class="hint">The website updates about a minute after publishing.${pubs ? ` You have <b>${pubs.left} of ${pubs.limit}</b> publishes left this month, so it is best to make all your changes first and publish them together.` : ""}</p>`, [{ label: "Not yet", value: false }, { label: "Publish", cls: "gold" }]);
   if (!ok) return;
   loading(true);
   const b = $("#publishBtn"); b.disabled = true;
   try {
     unsaved = true; await saveNow();
     if (unsaved) throw new Error("Could not save your changes first");
-    await api("publish", { message: "Update website: " + list.map((c) => c.text).join(", ").slice(0, 200) });
+    const pr = await api("publish", { message: "Update website: " + list.map((c) => c.text).join(", ").slice(0, 200) });
+    if (pr && pr.publishes) pubs = pr.publishes;
     live = clone({ site: draft.site, services: draft.services, pages: draft.pages, html: draft.html });
     draft.base = baseOf(live);
     repoImages = [...new Set([...repoImages, ...draft.images])];
-    toast("Published! The website updates in about a minute.");
+    toast("Published! The website updates in about a minute." + (pubs ? ` ${pubs.left} of ${pubs.limit} publishes left this month.` : ""));
   } catch (e) { toast(e.message, true); }
   b.disabled = false; loading(false); updateStatus();
 }

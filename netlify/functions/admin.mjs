@@ -8,6 +8,15 @@ const GH = "https://api.github.com";
 const REPO = process.env.GITHUB_REPO || "betterresults/prestige-signature-cleaning";
 const BRANCH = process.env.GITHUB_BRANCH || "main";
 const TOKEN_TTL = 1000 * 60 * 60 * 12;
+// Publishes allowed per month, so the free Netlify plan never runs out of credits (each publish is one deploy)
+const PUBLISH_LIMIT = Number(process.env.PUBLISH_LIMIT || 10);
+const month = () => new Date().toISOString().slice(0, 7);
+async function publishesLeft(s) {
+  const u = await s.get("publishes", { type: "json" });
+  const used = u && u.month === month() ? u.count : 0;
+  return { used, left: Math.max(0, PUBLISH_LIMIT - used), limit: PUBLISH_LIMIT };
+}
+const nextMonthName = () => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1); return "1 " + d.toLocaleString("en-GB", { month: "long", timeZone: "UTC" }); };
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const store = () => getStore({ name: "psc-admin", consistency: "strong" });
@@ -127,7 +136,7 @@ export default async (req) => {
     const s = store();
     if (action === "load") {
       const [live, draft] = await Promise.all([loadContent(), s.get("draft", { type: "json" })]);
-      return json(200, { ...live, draft: draft || null });
+      return json(200, { ...live, draft: draft || null, publishes: await publishesLeft(s) });
     }
     if (action === "saveDraft") {
       if (!body.draft || !body.draft.site || !body.draft.services || !body.draft.pages) throw new Error("Draft is incomplete");
@@ -152,9 +161,12 @@ export default async (req) => {
     if (action === "publish") {
       const draft = await s.get("draft", { type: "json" });
       if (!draft) return json(400, { error: "There is nothing to publish" });
+      const p = await publishesLeft(s);
+      if (p.left <= 0) return json(429, { error: `You have used all ${p.limit} publishes for this month. Your changes are saved, and you can publish them from ${nextMonthName()}.`, publishes: p });
       const res = await publish(draft, body.message);
       await s.delete("draft");
-      return json(200, res);
+      await s.setJSON("publishes", { month: month(), count: p.used + 1 });
+      return json(200, { ...res, publishes: await publishesLeft(s) });
     }
     return json(400, { error: "Unknown action" });
   } catch (e) {

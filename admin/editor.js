@@ -375,6 +375,7 @@ function attachEditor(doc) {
   const chip = doc.createElement("div"); chip.className = "pse-chip"; chip.textContent = "⚙ Section"; doc.body.appendChild(chip);
   const tip = doc.createElement("div"); tip.className = "pse-tip"; doc.body.appendChild(tip);
   const add = doc.createElement("button"); add.className = "pse-add"; add.type = "button"; add.textContent = "+ Add section"; doc.body.appendChild(add);
+  ["data-gramm", "data-gramm_editor", "data-enable-grammarly"].forEach((a) => doc.body.setAttribute(a, "false")); // stop Grammarly boxes in the editor
   let hoverEl = null, hoverSec = null;
 
   doc.addEventListener("mouseover", (e) => {

@@ -905,7 +905,7 @@ function renderPanel() {
   updateStatus();
 }
 function pageItem(f) {
-  return `<li data-f="${f}" class="${f === file ? "on" : ""}"><span class="t">${esc(pageLabel(f))}</span><span class="chg hidden"></span><button class="gear" data-seo="${f}" title="Page settings">⚙</button></li>`;
+  return `<li data-f="${f}" class="${f === file ? "on" : ""}"><span class="t">${esc(pageLabel(f))}</span><span class="chg hidden"></span><button class="gear" data-seo="${f}" title="Page settings">⚙</button>${KEEP_PAGES.includes(f) || !draft.pages[f] ? "" : `<button class="gear" data-del="${f}" title="Delete this page">🗑</button>`}</li>`;
 }
 const openGroups = new Set(["main"]);
 function group(id, title, files) {
@@ -968,9 +968,10 @@ function settingsPanel() {
 
 function bindPanel() {
   const p = $("#panel");
-  p.querySelectorAll(".plist li[data-f]").forEach((li) => (li.onclick = (e) => { if (e.target.closest("[data-seo]")) return; showPage(li.dataset.f); }));
+  p.querySelectorAll(".plist li[data-f]").forEach((li) => (li.onclick = (e) => { if (e.target.closest("[data-seo],[data-del]")) return; showPage(li.dataset.f); }));
   p.querySelectorAll("details.pgrp").forEach((d) => d.addEventListener("toggle", () => { if (d.open) openGroups.add(d.dataset.g); else openGroups.delete(d.dataset.g); }));
   p.querySelectorAll("[data-seo]").forEach((b) => (b.onclick = () => pageSettings(b.dataset.seo)));
+  p.querySelectorAll("[data-del]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); deletePage(b.dataset.del); }));
   if ($("#newSvcBtn")) $("#newSvcBtn").onclick = () => newService();
   if ($("#newPostBtn")) $("#newPostBtn").onclick = () => newPost();
   // services tab
@@ -1013,7 +1014,8 @@ async function pageSettings(f) {
     <label class="field"><span>Google description</span><textarea class="inp" name="desc" rows="3">${esc(m.desc)}</textarea></label>
     <label class="field"><span>Photo for link previews</span><select class="inp" name="ogImage"><option value="">Automatic (first photo on the page)</option>${repoImages.filter((n) => /\.(webp|png)$/.test(n) && !/^(favicon|logo|whatsapp)/.test(n)).concat(draft.images.filter((n) => !/\.(mp4|webm)$/.test(n))).map((n) => `<option ${m.ogImage === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
     <label class="row"><input type="checkbox" name="noindex" ${m.noindex ? "checked" : ""}> Hide this page from Google</label>
-    <p class="hint">Changed your mind about this page? <a href="#" id="revertPage" data-f="${f}">Undo all unpublished changes on this page</a>.</p>`,
+    <p class="hint">Changed your mind about this page? <a href="#" id="revertPage" data-f="${f}">Undo all unpublished changes on this page</a>.</p>
+    ${KEEP_PAGES.includes(f) ? "" : `<p class="hint"><a href="#" id="delPage" data-f="${f}" style="color:#b3261e">Delete this page</a></p>`}`,
     [{ label: "Cancel", value: false }, { label: "Save", cls: "primary", collect: true }]);
   if (r) {
     const n = { ...m, title: r.title.trim(), desc: r.desc.trim() };
@@ -1030,6 +1032,31 @@ document.addEventListener("click", async (e) => {
   if (!live.pages[f]) return toast("This is a new page, so there is no published version yet.", true);
   draft.html[f] = live.html[f]; draft.pages[f] = clone(live.pages[f]);
   changed({ rerender: f === file }); toast("This page is back to the published version");
+});
+
+/* ---------------- delete a page ---------------- */
+// Home and the pages in the main menu stay, so the menu never links to a missing page
+const KEEP_PAGES = ["index.html", "services.html", "about.html", "areas-we-cover.html", "blog.html", "contact.html", "quote.html"];
+async function deletePage(f) {
+  const m = draft.pages[f];
+  if (!m || KEEP_PAGES.includes(f)) return toast("This page is in the menu or the quote buttons, so it can not be deleted. You can hide it from Google in its settings instead.", true);
+  const name = pageLabel(f);
+  const what = m.kind === "service" ? "Its page will be removed and it will disappear from the menu, footer and service cards once you publish."
+    : m.kind === "post" ? "It will be removed from the blog once you publish."
+    : "It will be removed from the website once you publish.";
+  if (!(await confirmBox(`Delete ${esc(name)}?`, what + " Links to it in your own text will need updating. You can still undo this by discarding your changes before you publish.", "Delete", "danger"))) return;
+  if (m.kind === "service") draft.services.services = draft.services.services.filter((x) => x.slug + ".html" !== f);
+  delete draft.pages[f]; delete draft.html[f];
+  if (file === f) file = m.kind === "post" ? "blog.html" : "index.html";
+  changed({ panel: true }); showPage(file);
+  toast(`${name} deleted. Publish to make it final.`);
+}
+document.addEventListener("click", (e) => {
+  if (e.target.id !== "delPage") return;
+  e.preventDefault();
+  const f = e.target.dataset.f;
+  e.target.closest(".modal-bg")?.remove();
+  deletePage(f);
 });
 
 /* ---------------- blog posts ---------------- */
